@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { logger } from '../utils/logger';
 import { Manifest } from '../types';
-import { execSync } from 'child_process';
+import { execSync, exec } from 'child_process';
 
 export interface BuildOptions {
   clean?: boolean;

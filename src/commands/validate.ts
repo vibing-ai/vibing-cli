@@ -40,7 +40,7 @@ async function runValidation(options: ValidateOptions): Promise<void> {
   if (!manifest) return;
   
   // Run validations
-  const results = await runAllValidations(manifest, projectDir, options.fix);
+  const results = await runAllValidations(manifest, projectDir, options.fix ?? false);
   
   // Display results
   displayValidationResults(results);

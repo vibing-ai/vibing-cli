@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { Manifest } from '../types';
-import { createServer } from 'http';
+import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { Server } from 'http';
 import open from 'open'; // You'll need to install this: npm install open
 
@@ -60,7 +60,7 @@ export async function startSandbox(options: SandboxOptions): Promise<Server> {
 /**
  * Handle request for the root page
  */
-function handleRootRequest(res: http.ServerResponse, manifest: Manifest): void {
+function handleRootRequest(res: ServerResponse, manifest: Manifest): void {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   
   // Generate a simple dev dashboard
@@ -143,7 +143,7 @@ function handleRootRequest(res: http.ServerResponse, manifest: Manifest): void {
 /**
  * Handle request for the preview page
  */
-function handlePreviewRequest(res: http.ServerResponse, manifest: Manifest): void {
+function handlePreviewRequest(res: ServerResponse, manifest: Manifest): void {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   
   // Create a simple preview based on project type
@@ -242,7 +242,7 @@ function getAgentPreviewContent(name: string, description: string): string {
 /**
  * Handle API requests
  */
-function handleApiRequest(req: http.IncomingMessage, res: http.ServerResponse, manifest: Manifest): void {
+function handleApiRequest(req: IncomingMessage, res: ServerResponse, manifest: Manifest): void {
   res.writeHead(200, { 'Content-Type': 'application/json' });
   
   // Simple API responses based on endpoint
@@ -263,7 +263,7 @@ function handleApiRequest(req: http.IncomingMessage, res: http.ServerResponse, m
 /**
  * Handle requests for static files
  */
-function handleStaticFileRequest(req: http.IncomingMessage, res: http.ServerResponse, projectDir: string): void {
+function handleStaticFileRequest(req: IncomingMessage, res: ServerResponse, projectDir: string): void {
   // Serve static files from project
   const staticPath = path.join(projectDir, 'src', req.url ?? '');
   
@@ -292,7 +292,7 @@ function handleStaticFileRequest(req: http.IncomingMessage, res: http.ServerResp
 /**
  * Handle server errors
  */
-function handleServerError(res: http.ServerResponse): void {
+function handleServerError(res: ServerResponse): void {
   res.writeHead(500, { 'Content-Type': 'text/plain' });
   res.end('Internal Server Error');
 }

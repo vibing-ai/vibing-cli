@@ -33,7 +33,7 @@ export function devCommand(program: Command): void {
         logger.startSpinner('Initializing sandbox environment...');
         
         // Start sandbox server (implementation in sandbox.ts)
-        const port = options.port ?? 3000;
+        const port = parseInt(options.port ?? '3000', 10);
         const openBrowser = options.open ?? true;
         const server = await startSandbox({
           projectDir: process.cwd(),

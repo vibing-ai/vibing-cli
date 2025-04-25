@@ -84,8 +84,8 @@ async function validateProject(manifest: Manifest): Promise<boolean> {
   // Run validation checks
   const manifestResult = await validateManifest(manifest, false);
   const permissionsResult = await validatePermissions(manifest, false);
-  const securityResult = await validateSecurity(process.cwd(), false);
-  const accessibilityResult = await validateAccessibility(process.cwd(), false);
+  const securityResult = await validateSecurity(process.cwd());
+  const accessibilityResult = await validateAccessibility(process.cwd());
   
   // Combine results
   const result: ValidationResult = {
@@ -186,7 +186,7 @@ async function confirmPublication(manifest: Manifest): Promise<boolean> {
 /**
  * Publish to marketplace (or simulate publication)
  */
-async function publishToMarketplace(manifest: Manifest, isDryRun: boolean): Promise<void> {
+async function publishToMarketplace(manifest: Manifest, isDryRun: boolean = false): Promise<void> {
   logger.startSpinner(isDryRun ? 'Simulating publication...' : 'Publishing to marketplace...');
   
   // In a real implementation, this would:

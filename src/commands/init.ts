@@ -3,12 +3,13 @@ import inquirer from 'inquirer';
 import path from 'path';
 import fs from 'fs-extra';
 import { logger } from '../utils/logger';
-import { ProjectType } from '../types';
+import { ProjectType, Manifest } from '../types';
 
 export interface InitOptions {
   type?: ProjectType;
   yes?: boolean;
   template?: string;
+  name?: string;
 }
 
 export function initCommand(program: Command): void {
@@ -98,7 +99,7 @@ export function initCommand(program: Command): void {
         
         // Update package.json with project info
         const packageJsonPath = path.join(targetDir, 'package.json');
-        let packageJson = {};
+        let packageJson: Record<string, any> = {};
         if (fs.existsSync(packageJsonPath)) {
           packageJson = await fs.readJson(packageJsonPath);
           packageJson.name = name;
@@ -108,7 +109,7 @@ export function initCommand(program: Command): void {
         
         // Update manifest.json with project name
         const manifestPath = path.join(targetDir, 'manifest.json');
-        let manifest = {};
+        let manifest: Record<string, any> = {};
         if (fs.existsSync(manifestPath)) {
           manifest = await fs.readJson(manifestPath);
           manifest.name = name;
@@ -124,7 +125,7 @@ export function initCommand(program: Command): void {
         }
         
         // Use manifest or package.json for the project name
-        const projectName = options.name ?? manifest.name ?? packageJson.name;
+        const projectName = options?.name ?? manifest.name ?? packageJson.name;
         
         logger.stopSpinner(true, `Project created at ${targetDir}`);
         
