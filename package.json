@@ -1,7 +1,7 @@
 {
   "name": "@vibing-ai/cli",
-  "version": "0.1.0",
-  "description": "CLI tool for developing applications for the AI Marketplace",
+  "version": "0.1.1",
+  "description": "CLI tool for developing applications for Vibing AI",
   "main": "dist/index.js",
   "bin": {
     "vibe": "bin/vibe.js"
