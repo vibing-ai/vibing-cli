@@ -64,7 +64,7 @@ export function initCommand(program: Command): void {
       
       try {
         // Determine which template to use
-        const templateName = options?.template || type;
+        const templateName = options?.template ?? type;
         
         // Get template directory (in production this would be relative to __dirname)
         // For development, we'll use a path relative to the project root
@@ -96,22 +96,35 @@ export function initCommand(program: Command): void {
         // Copy template to target directory
         await fs.copy(templateDir, targetDir);
         
-        // Update package.json with project name
+        // Update package.json with project info
         const packageJsonPath = path.join(targetDir, 'package.json');
+        let packageJson = {};
         if (fs.existsSync(packageJsonPath)) {
-          const packageJson = await fs.readJson(packageJsonPath);
+          packageJson = await fs.readJson(packageJsonPath);
           packageJson.name = name;
+          packageJson.version = '0.1.0';
           await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
         }
         
         // Update manifest.json with project name
         const manifestPath = path.join(targetDir, 'manifest.json');
+        let manifest = {};
         if (fs.existsSync(manifestPath)) {
-          const manifest = await fs.readJson(manifestPath);
+          manifest = await fs.readJson(manifestPath);
           manifest.name = name;
           manifest.id = `com.example.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+          manifest.description = manifest.description ?? 'A Vibe Marketplace project';
           await fs.writeJson(manifestPath, manifest, { spaces: 2 });
+          
+          // Update package.json description with manifest description
+          if (fs.existsSync(packageJsonPath)) {
+            packageJson.description = manifest.description;
+            await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
+          }
         }
+        
+        // Use manifest or package.json for the project name
+        const projectName = options.name ?? manifest.name ?? packageJson.name;
         
         logger.stopSpinner(true, `Project created at ${targetDir}`);
         

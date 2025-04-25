@@ -4,6 +4,11 @@ import { useSuperAgent } from '@vibing-ai/sdk/common/super-agent';
 /**
  * Example component demonstrating Super Agent integration
  */
+interface AgentResponse {
+  content: string;
+  data?: Record<string, unknown>;
+}
+
 export const SuperAgentExample: React.FC = () => {
   const { askSuperAgent, suggestAction, onIntent, getConversationContext } = useSuperAgent();
   
@@ -16,11 +21,14 @@ export const SuperAgentExample: React.FC = () => {
   // Register intent handler on mount
   useEffect(() => {
     // Handle "summarize" intent from Super Agent
-    const unsubscribe = onIntent('summarize', async (params, context) => {
+    const unsubscribe = onIntent('summarize', async (params) => {
       const { text } = params;
       
       // In a real implementation, this would do more sophisticated processing
       const summary = `Summary of "${text.substring(0, 50)}...": This is ${text.length} characters long.`;
+      
+      // Add an await operation to make this genuinely asynchronous
+      await Promise.resolve();
       
       // Return result to Super Agent
       return { summary };
@@ -40,7 +48,7 @@ export const SuperAgentExample: React.FC = () => {
       }
     };
     
-    fetchContext();
+    void fetchContext();
   }, []);
   
   // Ask Super Agent (non-streaming)
@@ -108,17 +116,17 @@ export const SuperAgentExample: React.FC = () => {
         <div className="query-input">
           <textarea
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); }}
             placeholder="Enter your query here..."
             rows={3}
           />
           
           <div className="query-actions">
-            <button onClick={handleAskSuperAgent} disabled={isLoading || !query.trim()}>
+            <button onClick={() => handleAskSuperAgent()} disabled={isLoading || !query.trim()}>
               Ask Super Agent
             </button>
             
-            <button onClick={handleStreamingAsk} disabled={isLoading || !query.trim()}>
+            <button onClick={() => handleStreamingAsk()} disabled={isLoading || !query.trim()}>
               Stream Response
             </button>
           </div>

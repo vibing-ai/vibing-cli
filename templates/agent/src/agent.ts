@@ -19,6 +19,43 @@ interface AgentResponse {
   data?: any;
 }
 
+interface MessageData {
+  content: string;
+  additionalInfo?: Record<string, unknown>;
+}
+
+interface UserProfile {
+  name?: string;
+  age?: number;
+  income?: number;
+  occupation?: string;
+  riskTolerance?: string;
+  investmentGoals?: string[];
+  [key: string]: string | number | string[] | undefined;
+}
+
+interface StockData {
+  ticker: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  marketCap: number;
+}
+
+interface AllocationItem {
+  assetClass: string;
+  percentage: number;
+  description: string;
+}
+
+interface ResponseCardData {
+  title: string;
+  content: string;
+  recommendedAllocation?: AllocationItem[];
+  stockData?: Record<string, StockData>;
+  [key: string]: unknown;
+}
+
 /**
  * Specialized AI agent implementation
  * This example shows a financial advisor agent that provides investment advice
@@ -26,7 +63,7 @@ interface AgentResponse {
 export class FinancialAdvisorAgent {
   private knowledgeBase: KnowledgeItem[] = [];
   private conversationHistory: { role: 'user' | 'agent', text: string }[] = [];
-  private userProfile: any = null;
+  private userProfile: UserProfile | null = null;
   
   constructor() {
     // Initialize the agent
@@ -92,19 +129,50 @@ export class FinancialAdvisorAgent {
   private analyzeIntent(query: string): string {
     const lowerQuery = query.toLowerCase();
     
-    // Simple rule-based intent detection
-    // In a real implementation, this would use more sophisticated NLU
-    if (lowerQuery.includes('invest') || lowerQuery.includes('stock') || lowerQuery.includes('share') || lowerQuery.includes('bond')) {
+    // Check each intent category
+    if (this.isInvestmentIntent(lowerQuery)) {
       return 'investment_advice';
-    } else if (lowerQuery.includes('ticker') || lowerQuery.includes('price') || lowerQuery.includes('market')) {
+    } else if (this.isStockInfoIntent(lowerQuery)) {
       return 'stock_information';
-    } else if (lowerQuery.includes('retire') || lowerQuery.includes('401k') || lowerQuery.includes('pension')) {
+    } else if (this.isRetirementIntent(lowerQuery)) {
       return 'retirement_planning';
-    } else if (lowerQuery.includes('tax') || lowerQuery.includes('deduction') || lowerQuery.includes('write off')) {
+    } else if (this.isTaxIntent(lowerQuery)) {
       return 'tax_advice';
     } else {
       return 'general_question';
     }
+  }
+  
+  /**
+   * Check if query is related to investments
+   */
+  private isInvestmentIntent(query: string): boolean {
+    const investmentTerms = ['invest', 'stock', 'share', 'bond'];
+    return investmentTerms.some(term => query.includes(term));
+  }
+  
+  /**
+   * Check if query is related to stock information
+   */
+  private isStockInfoIntent(query: string): boolean {
+    const stockInfoTerms = ['ticker', 'price', 'market'];
+    return stockInfoTerms.some(term => query.includes(term));
+  }
+  
+  /**
+   * Check if query is related to retirement
+   */
+  private isRetirementIntent(query: string): boolean {
+    const retirementTerms = ['retire', '401k', 'pension'];
+    return retirementTerms.some(term => query.includes(term));
+  }
+  
+  /**
+   * Check if query is related to taxes
+   */
+  private isTaxIntent(query: string): boolean {
+    const taxTerms = ['tax', 'deduction', 'write off'];
+    return taxTerms.some(term => query.includes(term));
   }
   
   /**
@@ -168,37 +236,37 @@ export class FinancialAdvisorAgent {
   /**
    * Generate allocation data for visualization
    */
-  private generateAllocationData(riskProfile: string): any[] {
+  private generateAllocationData(riskProfile: string): AllocationItem[] {
     switch (riskProfile) {
       case 'conservative':
         return [
-          { category: 'Bonds', percentage: 60 },
-          { category: 'Dividend Stocks', percentage: 25 },
-          { category: 'Cash', percentage: 10 },
-          { category: 'Growth Stocks', percentage: 5 }
+          { assetClass: 'Bonds', percentage: 60, description: 'Bonds' },
+          { assetClass: 'Dividend Stocks', percentage: 25, description: 'High-quality dividend stocks' },
+          { assetClass: 'Cash', percentage: 10, description: 'Cash' },
+          { assetClass: 'Growth Stocks', percentage: 5, description: 'Growth stocks' }
         ];
       case 'moderate':
         return [
-          { category: 'Index Funds', percentage: 40 },
-          { category: 'Bonds', percentage: 30 },
-          { category: 'Blue-chip Stocks', percentage: 20 },
-          { category: 'Cash', percentage: 5 },
-          { category: 'Alternative Investments', percentage: 5 }
+          { assetClass: 'Index Funds', percentage: 40, description: 'Diversified index funds' },
+          { assetClass: 'Bonds', percentage: 30, description: 'Bonds' },
+          { assetClass: 'Blue-chip Stocks', percentage: 20, description: 'Blue-chip stocks' },
+          { assetClass: 'Cash', percentage: 5, description: 'Cash' },
+          { assetClass: 'Alternative Investments', percentage: 5, description: 'Alternative investments' }
         ];
       case 'aggressive':
         return [
-          { category: 'Growth Stocks', percentage: 50 },
-          { category: 'Index Funds', percentage: 20 },
-          { category: 'Emerging Markets', percentage: 15 },
-          { category: 'Bonds', percentage: 10 },
-          { category: 'Alternative Investments', percentage: 5 }
+          { assetClass: 'Growth Stocks', percentage: 50, description: 'Growth stocks' },
+          { assetClass: 'Index Funds', percentage: 20, description: 'Diversified index funds' },
+          { assetClass: 'Emerging Markets', percentage: 15, description: 'Emerging markets' },
+          { assetClass: 'Bonds', percentage: 10, description: 'Bonds' },
+          { assetClass: 'Alternative Investments', percentage: 5, description: 'Alternative investments' }
         ];
       default:
         return [
-          { category: 'Stocks', percentage: 50 },
-          { category: 'Bonds', percentage: 30 },
-          { category: 'Cash', percentage: 10 },
-          { category: 'Alternative Investments', percentage: 10 }
+          { assetClass: 'Stocks', percentage: 50, description: 'Diversified stocks' },
+          { assetClass: 'Bonds', percentage: 30, description: 'Bonds' },
+          { assetClass: 'Cash', percentage: 10, description: 'Cash' },
+          { assetClass: 'Alternative Investments', percentage: 10, description: 'Alternative investments' }
         ];
     }
   }
@@ -214,15 +282,15 @@ export class FinancialAdvisorAgent {
     const tickerPattern = /\b[A-Z]{1,5}\b/g;
     const tickers = query.match(tickerPattern) || ['AAPL']; // Default to AAPL if no ticker found
     
-    const stockData: any = {};
+    const stockData: Record<string, StockData> = {};
     
     // Generate mock data for each ticker
     tickers.forEach(ticker => {
       stockData[ticker] = {
+        ticker,
         price: Math.floor(Math.random() * 1000) + 50,
         change: (Math.random() * 6) - 3,
-        volume: Math.floor(Math.random() * 10000000),
-        pe: Math.floor(Math.random() * 30) + 5,
+        changePercent: (Math.random() * 10) - 5,
         marketCap: Math.floor(Math.random() * 1000) + 10
       };
     });
@@ -230,22 +298,22 @@ export class FinancialAdvisorAgent {
     // Create response text
     let responseText = `Here's the current information for ${tickers.join(', ')}:\n\n`;
     
-    Object.entries(stockData).forEach(([ticker, data]: [string, any]) => {
+    Object.entries(stockData).forEach(([ticker, data]: [string, StockData]) => {
       const changeSymbol = data.change >= 0 ? '↑' : '↓';
       const changeAbs = Math.abs(data.change).toFixed(2);
-      responseText += `${ticker}: $${data.price.toFixed(2)} ${changeSymbol}${changeAbs}% | Volume: ${data.volume.toLocaleString()} | P/E: ${data.pe.toFixed(2)} | Market Cap: $${data.marketCap}B\n`;
+      responseText += `${ticker}: $${data.price.toFixed(2)} ${changeSymbol}${changeAbs}% | Change: ${data.changePercent.toFixed(2)}%\n`;
     });
     
     // Add some analysis
     responseText += "\nMarket Analysis:\n";
     if (tickers.length === 1) {
       const data = stockData[tickers[0]];
-      if (data.pe > 25) {
-        responseText += "This stock has a relatively high P/E ratio, which might indicate that it's overvalued or that investors expect high growth in the future.";
-      } else if (data.pe < 15) {
-        responseText += "This stock has a relatively low P/E ratio, which might indicate that it's undervalued or that investors expect slower growth.";
+      if (data.changePercent > 2.5) {
+        responseText += "This stock has a relatively high change percentage, which might indicate that it's overvalued or that investors expect high growth in the future.";
+      } else if (data.changePercent < -2.5) {
+        responseText += "This stock has a relatively low change percentage, which might indicate that it's undervalued or that investors expect slower growth.";
       } else {
-        responseText += "This stock has a moderate P/E ratio, which is generally in line with market averages.";
+        responseText += "This stock has a moderate change percentage, which is generally in line with market averages.";
       }
     } else {
       responseText += "Multiple stocks selected. Consider comparing their performance metrics to make informed investment decisions.";
@@ -516,20 +584,20 @@ export class FinancialAdvisorAgent {
   /**
    * Create a visual response card for display in the conversation
    */
-  createResponseCard(data: any): any {
+  createResponseCard(data: ResponseCardData): ResponseCardData {
     // This would create a card visualization based on the data
     // For example, a portfolio allocation pie chart
     
     if (data.recommendedAllocation) {
-      return createConversationCard({
+      return {
+        title: 'Recommended Portfolio Allocation',
         content: (
           <div className="allocation-card">
-            <h3>Recommended Portfolio Allocation</h3>
             <div className="allocation-chart">
               {/* This would be a chart component in a real implementation */}
-              {data.recommendedAllocation.map((item: any) => (
-                <div key={item.category} className="allocation-item">
-                  <div className="category-name">{item.category}</div>
+              {data.recommendedAllocation.map((item: AllocationItem) => (
+                <div key={item.assetClass} className="allocation-item">
+                  <div className="category-name">{item.assetClass}</div>
                   <div className="percentage-bar">
                     <div 
                       className="fill" 
@@ -542,17 +610,16 @@ export class FinancialAdvisorAgent {
             </div>
           </div>
         ),
-        actions: (
-          <div className="card-actions">
-            <button>Customize Allocation</button>
-            <button>View Details</button>
-          </div>
-        )
-      });
+        recommendedAllocation: data.recommendedAllocation,
+        stockData: data.stockData
+      };
     }
     
     // Default empty card if no suitable data
-    return null;
+    return {
+      title: '',
+      content: ''
+    };
   }
 }
 

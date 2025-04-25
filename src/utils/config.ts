@@ -52,8 +52,8 @@ export async function loadConfig(): Promise<Config> {
     } else {
       // Create default config
       config = {
-        apiKey: process.env.AI_MARKETPLACE_API_KEY || '',
-        apiUrl: process.env.AI_MARKETPLACE_URL || 'https://api.ai-marketplace.dev',
+        apiKey: process.env.AI_MARKETPLACE_API_KEY ?? '',
+        apiUrl: process.env.AI_MARKETPLACE_URL ?? 'https://api.ai-marketplace.dev',
         telemetry: true,
         templates: {
           defaultType: 'app',
@@ -102,7 +102,10 @@ export async function saveConfig(config: Config): Promise<void> {
  */
 export async function getConfigValue<K extends keyof Config>(key: K): Promise<Config[K]> {
   const config = await loadConfig();
-  return config[key];
+  if (key in config) {
+    return config[key];
+  }
+  throw new Error(`Invalid configuration key: ${key}`);
 }
 
 /**
@@ -110,8 +113,12 @@ export async function getConfigValue<K extends keyof Config>(key: K): Promise<Co
  */
 export async function updateConfigValue<K extends keyof Config>(key: K, value: Config[K]): Promise<void> {
   const config = await loadConfig();
-  config[key] = value;
-  await saveConfig(config);
+  if (key in config) {
+    config[key] = value;
+    await saveConfig(config);
+  } else {
+    throw new Error(`Invalid configuration key: ${key}`);
+  }
 }
 
 /**
@@ -119,7 +126,7 @@ export async function updateConfigValue<K extends keyof Config>(key: K, value: C
  */
 export async function getEffectiveApiKey(): Promise<string> {
   const config = await loadConfig();
-  return process.env.AI_MARKETPLACE_API_KEY || config.apiKey;
+  return process.env.AI_MARKETPLACE_API_KEY ?? config.apiKey;
 }
 
 /**
@@ -127,5 +134,5 @@ export async function getEffectiveApiKey(): Promise<string> {
  */
 export async function getEffectiveApiUrl(): Promise<string> {
   const config = await loadConfig();
-  return process.env.AI_MARKETPLACE_URL || config.apiUrl;
+  return process.env.AI_MARKETPLACE_URL ?? config.apiUrl;
 } 

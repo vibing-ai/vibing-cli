@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { loadConfig, getConfigValue } from '../../utils/config';
+import { loadConfig } from '../../utils/config';
 import { get } from 'lodash';
 
 /**

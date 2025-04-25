@@ -14,6 +14,11 @@ interface DataSeries {
   data: DataPoint[];
 }
 
+interface DataUpdate {
+  series: string;
+  data: DataPoint[];
+}
+
 /**
  * Example Context Panel component
  * Shows relevant data and tools in a sidebar panel
@@ -70,7 +75,7 @@ export const ContextPanel: React.FC = () => {
     }, 1000);
     
     // Subscribe to data updates
-    const unsubscribe = subscribe('data.update', (updatedData: any) => {
+    const unsubscribe = subscribe('data.update', (updatedData: DataUpdate) => {
       console.log('Received data update:', updatedData);
       // In a real implementation, this would update the data series
     });
@@ -182,25 +187,25 @@ export const ContextPanel: React.FC = () => {
               <div className="button-group">
                 <button 
                   className={timeRange === '1h' ? 'active' : ''}
-                  onClick={() => setTimeRange('1h')}
+                  onClick={() => { setTimeRange('1h'); }}
                 >
                   1h
                 </button>
                 <button 
                   className={timeRange === '1d' ? 'active' : ''}
-                  onClick={() => setTimeRange('1d')}
+                  onClick={() => { setTimeRange('1d'); }}
                 >
                   1d
                 </button>
                 <button 
                   className={timeRange === '1w' ? 'active' : ''}
-                  onClick={() => setTimeRange('1w')}
+                  onClick={() => { setTimeRange('1w'); }}
                 >
                   1w
                 </button>
                 <button 
                   className={timeRange === '1m' ? 'active' : ''}
-                  onClick={() => setTimeRange('1m')}
+                  onClick={() => { setTimeRange('1m'); }}
                 >
                   1m
                 </button>
@@ -214,7 +219,7 @@ export const ContextPanel: React.FC = () => {
                   <button
                     key={series.id}
                     className={selectedSeries === series.id ? 'active' : ''}
-                    onClick={() => setSelectedSeries(series.id)}
+                    onClick={() => { setSelectedSeries(series.id); }}
                     style={{ borderColor: series.color }}
                   >
                     {series.name}
@@ -225,7 +230,7 @@ export const ContextPanel: React.FC = () => {
             
             <div className="chart-section">
               {selectedSeries ? (
-                getSelectedSeriesData() ? renderChart(getSelectedSeriesData()!) : null
+                getSelectedSeriesData() && renderChart(getSelectedSeriesData())
               ) : (
                 <div className="no-selection-message">
                   Select a data series to view details
@@ -239,11 +244,11 @@ export const ContextPanel: React.FC = () => {
     
     actions: dataSeries.length > 0 && (
       <div className="panel-actions">
-        <button onClick={() => console.log('Exporting data:', dataSeries)}>
+        <button onClick={() => { console.log('Exporting data:', dataSeries); }}>
           Export Data
         </button>
         
-        <button onClick={() => console.log('Analyzing data:', dataSeries)}>
+        <button onClick={() => { console.log('Analyzing data:', dataSeries); }}>
           Analyze Trends
         </button>
       </div>

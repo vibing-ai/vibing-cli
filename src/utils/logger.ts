@@ -3,6 +3,10 @@ import ora, { Ora } from 'ora';
 
 export type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'debug';
 
+interface TableRow {
+  [key: string]: string | number | boolean;
+}
+
 class Logger {
   private spinner: Ora | null = null;
 
@@ -68,7 +72,7 @@ class Logger {
   }
 
   // Create a table from data
-  table(data: any[]): void {
+  table(data: TableRow[]): void {
     if (this.spinner) {
       this.spinner.stop();
     }

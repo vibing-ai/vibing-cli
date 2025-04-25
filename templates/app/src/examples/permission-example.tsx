@@ -45,7 +45,7 @@ export const PermissionExample: React.FC = () => {
       setIsCheckingPermissions(false);
     };
     
-    checkExistingPermissions();
+    void checkExistingPermissions();
   }, []);
   
   // Request memory read permission
@@ -201,21 +201,21 @@ export const PermissionExample: React.FC = () => {
         
         <div className="permission-actions">
           <button 
-            onClick={requestMemoryReadPermission} 
+            onClick={() => requestMemoryReadPermission()} 
             disabled={hasMemoryReadPermission}
           >
             Request Memory Read
           </button>
           
           <button 
-            onClick={requestMemoryWritePermission} 
+            onClick={() => requestMemoryWritePermission()} 
             disabled={hasMemoryWritePermission}
           >
             Request Memory Write
           </button>
           
           <button 
-            onClick={requestUserProfilePermission} 
+            onClick={() => requestUserProfilePermission()} 
             disabled={hasUserProfilePermission}
           >
             Request User Profile
@@ -228,7 +228,7 @@ export const PermissionExample: React.FC = () => {
         <p>Request multiple permissions in a single dialog.</p>
         
         <button 
-          onClick={requestAllPermissions}
+          onClick={() => requestAllPermissions()}
           disabled={hasMemoryReadPermission && hasMemoryWritePermission && hasUserProfilePermission}
         >
           Request All Permissions
@@ -241,14 +241,14 @@ export const PermissionExample: React.FC = () => {
         
         <div className="permission-actions">
           <button 
-            onClick={revokeMemoryPermissions}
+            onClick={() => revokeMemoryPermissions()}
             disabled={!hasMemoryReadPermission && !hasMemoryWritePermission}
           >
             Revoke Memory Permissions
           </button>
           
           <button 
-            onClick={revokeProfilePermission}
+            onClick={() => revokeProfilePermission()}
             disabled={!hasUserProfilePermission}
           >
             Revoke Profile Permission

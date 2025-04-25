@@ -79,7 +79,7 @@ export const MemoryExample: React.FC = () => {
         <div className="preference-controls">
           <div className="control-group">
             <label>Theme:</label>
-            <select value={theme} onChange={(e) => handleThemeChange(e.target.value)}>
+            <select value={theme} onChange={(e) => { handleThemeChange(e.target.value); }}>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
               <option value="system">System</option>
@@ -88,7 +88,7 @@ export const MemoryExample: React.FC = () => {
           
           <div className="control-group">
             <label>Font Size:</label>
-            <select value={fontSize} onChange={(e) => handleFontSizeChange(e.target.value)}>
+            <select value={fontSize} onChange={(e) => { handleFontSizeChange(e.target.value); }}>
               <option value="small">Small</option>
               <option value="medium">Medium</option>
               <option value="large">Large</option>
@@ -100,7 +100,7 @@ export const MemoryExample: React.FC = () => {
             <input
               type="checkbox"
               checked={notifications}
-              onChange={(e) => handleNotificationsChange(e.target.checked)}
+              onChange={(e) => { handleNotificationsChange(e.target.checked); }}
             />
             <span>Enabled</span>
           </div>

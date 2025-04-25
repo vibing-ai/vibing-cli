@@ -25,15 +25,15 @@ const AppHome: React.FC = () => {
             <p>Select an example to see it in action:</p>
             
             <div className="example-buttons">
-              <button onClick={() => setCurrentExample('memory')}>
+              <button onClick={() => { setCurrentExample('memory'); }}>
                 Memory System Example
               </button>
               
-              <button onClick={() => setCurrentExample('permission')}>
+              <button onClick={() => { setCurrentExample('permission'); }}>
                 Permission System Example
               </button>
               
-              <button onClick={() => setCurrentExample('super-agent')}>
+              <button onClick={() => { setCurrentExample('super-agent'); }}>
                 Super Agent Integration Example
               </button>
             </div>
@@ -45,7 +45,7 @@ const AppHome: React.FC = () => {
   return (
     <div className="app-home">
       {currentExample !== 'none' && (
-        <button className="back-button" onClick={() => setCurrentExample('none')}>
+        <button className="back-button" onClick={() => { setCurrentExample('none'); }}>
           ← Back to Examples
         </button>
       )}

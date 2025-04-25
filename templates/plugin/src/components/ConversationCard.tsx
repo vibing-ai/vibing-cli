@@ -31,13 +31,13 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ data, title 
         <div className="view-toggle">
           <button 
             className={view === 'chart' ? 'active' : ''}
-            onClick={() => setView('chart')}
+            onClick={() => { setView('chart'); }}
           >
             Chart View
           </button>
           <button 
             className={view === 'table' ? 'active' : ''}
-            onClick={() => setView('table')}
+            onClick={() => { setView('table'); }}
           >
             Table View
           </button>
@@ -51,7 +51,7 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ data, title 
                 <div 
                   key={item.id} 
                   className={`chart-bar ${selectedItem?.id === item.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedItem(item)}
+                  onClick={() => { setSelectedItem(item); }}
                 >
                   <div className="bar-label">{item.name}</div>
                   <div className="bar-container">
@@ -82,7 +82,7 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ data, title 
                     <tr 
                       key={item.id}
                       className={selectedItem?.id === item.id ? 'selected' : ''}
-                      onClick={() => setSelectedItem(item)}
+                      onClick={() => { setSelectedItem(item); }}
                     >
                       <td>{item.name}</td>
                       <td>{item.value.toLocaleString()}</td>
@@ -114,12 +114,12 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ data, title 
     
     actions: (
       <div className="card-actions">
-        <button onClick={() => console.log('Data exported:', data)}>
+        <button onClick={() => { console.log('Data exported:', data); }}>
           Export Data
         </button>
         
         {selectedItem && (
-          <button onClick={() => setSelectedItem(null)}>
+          <button onClick={() => { setSelectedItem(null); }}>
             Clear Selection
           </button>
         )}

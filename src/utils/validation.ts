@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
-import { Manifest, ValidationResult, ValidationError, ValidationWarning } from '../types';
+import { Manifest, ValidationResult, ValidationWarning } from '../types';
 
 // Default validation result
 const defaultResult: ValidationResult = {
@@ -19,6 +19,20 @@ export async function validateManifest(
   const result: ValidationResult = { ...defaultResult };
   
   // Check required fields
+  validateRequiredFields(manifest, result);
+  
+  // Check recommended fields
+  validateRecommendedFields(manifest, result);
+  
+  result.valid = result.errors.length === 0;
+  return result;
+}
+
+/**
+ * Validate required manifest fields
+ */
+function validateRequiredFields(manifest: Manifest, result: ValidationResult): void {
+  // Validate ID field
   if (!manifest.id) {
     result.errors.push({
       code: 'manifest-missing-id',
@@ -31,6 +45,7 @@ export async function validateManifest(
     });
   }
   
+  // Validate name field
   if (!manifest.name) {
     result.errors.push({
       code: 'manifest-missing-name',
@@ -38,6 +53,7 @@ export async function validateManifest(
     });
   }
   
+  // Validate version field
   if (!manifest.version) {
     result.errors.push({
       code: 'manifest-missing-version',
@@ -50,6 +66,7 @@ export async function validateManifest(
     });
   }
   
+  // Validate type field
   if (!manifest.type) {
     result.errors.push({
       code: 'manifest-missing-type',
@@ -61,8 +78,13 @@ export async function validateManifest(
       message: 'Manifest type must be one of: app, plugin, agent'
     });
   }
-  
-  // Check recommended fields
+}
+
+/**
+ * Validate recommended manifest fields
+ */
+function validateRecommendedFields(manifest: Manifest, result: ValidationResult): void {
+  // Check description field
   if (!manifest.description) {
     result.warnings.push({
       code: 'manifest-missing-description',
@@ -70,27 +92,13 @@ export async function validateManifest(
     });
   }
   
+  // Check author field
   if (!manifest.author) {
     result.warnings.push({
       code: 'manifest-missing-author',
       message: 'Manifest is missing recommended field: author'
     });
   }
-  
-  // Auto-fix if requested
-  if (fix) {
-    let fixed = false;
-    
-    // Add fixes here in a real implementation
-    
-    if (fixed) {
-      // Save fixed manifest
-      await fs.writeJson(path.resolve(process.cwd(), 'manifest.json'), manifest, { spaces: 2 });
-    }
-  }
-  
-  result.valid = result.errors.length === 0;
-  return result;
 }
 
 /**
@@ -112,47 +120,8 @@ export async function validatePermissions(
     } else {
       // Validate each permission
       manifest.permissions.forEach((permission, index) => {
-        if (!permission.type) {
-          result.errors.push({
-            code: 'permission-missing-type',
-            message: `Permission at index ${index} is missing required field: type`,
-            path: `permissions[${index}].type`
-          });
-        }
-        
-        if (permission.type === 'memory' && (!permission.access || permission.access.length === 0)) {
-          result.errors.push({
-            code: 'permission-missing-access',
-            message: `Memory permission at index ${index} is missing required field: access`,
-            path: `permissions[${index}].access`
-          });
-        }
-        
-        // Check for overly broad permissions
-        if (
-          permission.type === 'memory' && 
-          permission.access?.includes('write') && 
-          (!permission.scope || permission.scope === 'global')
-        ) {
-          result.warnings.push({
-            code: 'permission-too-broad',
-            message: 'Global write permission is very broad. Consider using a more specific scope.',
-            path: `permissions[${index}].scope`
-          });
-        }
+        validateSinglePermission(permission, index, result);
       });
-    }
-  }
-  
-  // Auto-fix if requested
-  if (fix) {
-    let fixed = false;
-    
-    // Add fixes here in a real implementation
-    
-    if (fixed) {
-      // Save fixed manifest
-      await fs.writeJson(path.resolve(process.cwd(), 'manifest.json'), manifest, { spaces: 2 });
     }
   }
   
@@ -161,11 +130,46 @@ export async function validatePermissions(
 }
 
 /**
+ * Validate a single permission entry
+ */
+function validateSinglePermission(permission: any, index: number, result: ValidationResult): void {
+  // Check for required type field
+  if (!permission.type) {
+    result.errors.push({
+      code: 'permission-missing-type',
+      message: `Permission at index ${index} is missing required field: type`,
+      path: `permissions[${index}].type`
+    });
+  }
+  
+  // Check for memory permission requirements
+  if (permission.type === 'memory' && (!permission.access || permission.access.length === 0)) {
+    result.errors.push({
+      code: 'permission-missing-access',
+      message: `Memory permission at index ${index} is missing required field: access`,
+      path: `permissions[${index}].access`
+    });
+  }
+  
+  // Check for overly broad permissions
+  if (
+    permission.type === 'memory' && 
+    permission.access?.includes('write') && 
+    (!permission.scope || permission.scope === 'global')
+  ) {
+    result.warnings.push({
+      code: 'permission-too-broad',
+      message: 'Global write permission is very broad. Consider using a more specific scope.',
+      path: `permissions[${index}].scope`
+    });
+  }
+}
+
+/**
  * Validates security aspects of the project
  */
 export async function validateSecurity(
-  projectDir: string, 
-  fix = false
+  projectDir: string
 ): Promise<ValidationResult> {
   const result: ValidationResult = { ...defaultResult };
   
@@ -199,71 +203,99 @@ export async function validateSecurity(
 }
 
 /**
- * Validates accessibility of the project
- */
-export async function validateAccessibility(
-  projectDir: string, 
-  fix = false
-): Promise<ValidationResult> {
-  const result: ValidationResult = { ...defaultResult };
-  
-  // In a real implementation, this would:
-  // 1. Check for aria attributes
-  // 2. Verify color contrast
-  // 3. Ensure keyboard navigation
-  // 4. Check for alt text on images
-  
-  // Example check for demonstration
-  const srcDir = path.join(projectDir, 'src');
-  if (fs.existsSync(srcDir)) {
-    try {
-      // Recursively find all .tsx and .jsx files
-      const files = await findFiles(srcDir, ['.tsx', '.jsx']);
-      
-      // Check each file
-      for (const file of files) {
-        const content = await fs.readFile(file, 'utf8');
-        
-        // Simple check for image tags without alt attributes
-        if (content.includes('<img ') && !content.includes('alt=')) {
-          result.warnings.push({
-            code: 'a11y-missing-alt',
-            message: 'Found image tag without alt attribute',
-            path: path.relative(projectDir, file)
-          });
-        }
-      }
-    } catch (error) {
-      result.errors.push({
-        code: 'a11y-check-failed',
-        message: `Accessibility check failed: ${(error as Error).message}`
-      });
-    }
-  }
-  
-  result.valid = result.errors.length === 0;
-  return result;
-}
-
-/**
  * Helper function to find files with specific extensions
  */
 async function findFiles(dir: string, extensions: string[]): Promise<string[]> {
   const files: string[] = [];
   
-  const items = await fs.readdir(dir);
+  // Validate and normalize the directory path
+  const normalizedDir = path.normalize(dir);
   
-  for (const item of items) {
-    const fullPath = path.join(dir, item);
-    const stats = await fs.stat(fullPath);
+  try {
+    const items = await fs.readdir(normalizedDir);
     
-    if (stats.isDirectory()) {
-      const subDirFiles = await findFiles(fullPath, extensions);
-      files.push(...subDirFiles);
-    } else if (stats.isFile() && extensions.some(ext => item.endsWith(ext))) {
-      files.push(fullPath);
+    for (const item of items) {
+      // Construct and validate full path
+      const fullPath = path.join(normalizedDir, item);
+      
+      // Ensure the path is still within the original directory (prevent path traversal)
+      if (!fullPath.startsWith(normalizedDir)) {
+        continue;
+      }
+      
+      try {
+        const stats = await fs.stat(fullPath);
+        
+        if (stats.isDirectory()) {
+          const subDirFiles = await findFiles(fullPath, extensions);
+          files.push(...subDirFiles);
+        } else if (stats.isFile() && extensions.some(ext => item.endsWith(ext))) {
+          files.push(fullPath);
+        }
+      } catch (error) {
+        // Log but continue processing other files
+        console.error(`Error reading file stats for ${fullPath}:`, error);
+      }
     }
+  } catch (error) {
+    console.error(`Error reading directory ${normalizedDir}:`, error);
   }
   
   return files;
+}
+
+/**
+ * Validates accessibility of the project
+ */
+export async function validateAccessibility(
+  projectDir: string
+): Promise<ValidationResult> {
+  const result: ValidationResult = { ...defaultResult };
+  
+  // Validate and normalize the project directory path
+  const normalizedProjectDir = path.normalize(projectDir);
+  
+  // Example check for demonstration
+  const srcDir = path.join(normalizedProjectDir, 'src');
+  
+  try {
+    // Check if src directory exists
+    const srcExists = await fs.pathExists(srcDir);
+    if (srcExists) {
+      // Recursively find all .tsx and .jsx files
+      const files = await findFiles(srcDir, ['.tsx', '.jsx']);
+      
+      // Check each file
+      for (const file of files) {
+        try {
+          // Make sure file is within project directory
+          if (!file.startsWith(normalizedProjectDir)) {
+            continue;
+          }
+          
+          const content = await fs.readFile(file, 'utf8');
+          
+          // Safely check for image tags without alt attributes using regex instead of includes
+          const imgTagWithoutAlt = /<img\s+(?![^>]*\balt=)[^>]*\/?>/i;
+          if (imgTagWithoutAlt.test(content)) {
+            result.warnings.push({
+              code: 'a11y-missing-alt',
+              message: 'Found image tag without alt attribute',
+              path: path.relative(normalizedProjectDir, file)
+            });
+          }
+        } catch (error) {
+          console.error(`Error reading file ${file}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    result.errors.push({
+      code: 'a11y-check-failed',
+      message: `Accessibility check failed: ${(error as Error).message}`
+    });
+  }
+  
+  result.valid = result.errors.length === 0;
+  return result;
 } 

@@ -14,6 +14,7 @@ export interface TestOptions {
   coverage?: boolean;
   watch?: boolean;
   json?: boolean;
+  dir?: string;
 }
 
 export function testCommand(program: Command): void {
@@ -28,6 +29,7 @@ export function testCommand(program: Command): void {
     .option('--coverage', 'Generate coverage report')
     .option('--watch', 'Watch for changes')
     .option('--json', 'Output results as JSON')
+    .option('--dir', 'Specify test directory')
     .action(async (options: TestOptions) => {
       logger.log('Running tests...', 'info');
       
@@ -39,8 +41,12 @@ export function testCommand(program: Command): void {
           return;
         }
         
-        // Read manifest
-        const manifest = await fs.readJson(manifestPath) as Manifest;
+        // Find test files and coverage
+        const packageJsonPath = path.join(process.cwd(), 'package.json');
+        const testDirectories = options.dir ?? 'tests';
+        const packageJson = await fs.readJson(packageJsonPath);
+        const hasJest = packageJson.dependencies?.jest ?? packageJson.devDependencies?.jest;
+        const hasCypress = packageJson.dependencies?.cypress ?? packageJson.devDependencies?.cypress;
         
         // Determine which tests to run
         const runAll = options.all || 

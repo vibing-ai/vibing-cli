@@ -59,7 +59,7 @@ export const listCommand = new Command('list')
       // Environment variables
       console.log(chalk.blue('Environment Variables'));
       console.log(`AI_MARKETPLACE_API_KEY: ${process.env.AI_MARKETPLACE_API_KEY ? '********' : chalk.italic('not set')}`);
-      console.log(`AI_MARKETPLACE_URL: ${process.env.AI_MARKETPLACE_URL || chalk.italic('not set')}`);
+      console.log(`AI_MARKETPLACE_URL: ${process.env.AI_MARKETPLACE_URL ?? chalk.italic('not set')}`);
       console.log();
     } catch (error) {
       console.error(chalk.red('Error listing configuration:'), error);

@@ -7,11 +7,12 @@ export default createApp({
   
   // Initialize when app is first loaded
   onInitialize: async (context) => {
+    await Promise.resolve();
     console.log('App initialized with context:', context);
   },
   
   // Render the app UI
-  render: ({ mount, context }) => {
+  render: ({ mount }) => {
     // Create root element
     const root = document.createElement('div');
     root.className = 'app-container';
@@ -37,18 +38,20 @@ export default createApp({
       // Add event listener for the button
       const button = document.getElementById('memory-test');
       if (button) {
-        button.addEventListener('click', async () => {
-          try {
-            // Example of using memory API
-            const memoryData = await window.memory.get('test-key');
-            alert(memoryData ? `Found data: ${JSON.stringify(memoryData)}` : 'No data found');
-            
-            // Set some data
-            await window.memory.set('test-key', { timestamp: Date.now() });
-            alert('Data saved to memory!');
-          } catch (error) {
-            alert(`Error: ${error.message}`);
-          }
+        button.addEventListener('click', () => {
+          (async () => {
+            try {
+              // Example of using memory API
+              const memoryData = await window.memory.get('test-key');
+              alert(memoryData ? `Found data: ${JSON.stringify(memoryData)}` : 'No data found');
+              
+              // Set some data
+              await window.memory.set('test-key', { timestamp: Date.now() });
+              alert('Data saved to memory!');
+            } catch (error) {
+              alert(`Error: ${error.message}`);
+            }
+          })();
         });
       }
     }
@@ -58,7 +61,25 @@ export default createApp({
       // Clean up event listeners, subscriptions, etc.
       const button = document.getElementById('memory-test');
       if (button) {
-        button.removeEventListener('click', () => {});
+        // Create a function reference for the event handler
+        const handleClick = () => {
+          (async () => {
+            try {
+              // Example of using memory API
+              const memoryData = await window.memory.get('test-key');
+              alert(memoryData ? `Found data: ${JSON.stringify(memoryData)}` : 'No data found');
+              
+              // Set some data
+              await window.memory.set('test-key', { timestamp: Date.now() });
+              alert('Data saved to memory!');
+            } catch (error) {
+              alert(`Error: ${error.message}`);
+            }
+          })();
+        };
+        
+        // Remove the event listener using the function reference
+        button.removeEventListener('click', handleClick);
       }
     };
   }

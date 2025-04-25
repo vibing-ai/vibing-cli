@@ -1,6 +1,5 @@
-import { TestResult, TestFile } from '../types';
+import { TestResult } from '../types';
 import path from 'path';
-import { execSync } from 'child_process';
 import fs from 'fs-extra';
 
 interface TestOptions {
@@ -79,7 +78,7 @@ async function runTests(
     const hasJest = packageJson.dependencies?.jest || packageJson.devDependencies?.jest;
     const hasCypress = packageJson.dependencies?.cypress || packageJson.devDependencies?.cypress;
     
-    let testCommand: string;
+    let testCommand = '';
     
     if (testType === 'unit' || testType === 'integration') {
       if (!hasJest) {

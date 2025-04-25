@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMemory } from '@vibing-ai/sdk/common/memory';
 import { useSuperAgent } from '@vibing-ai/sdk/common/super-agent';
 import { financialAdvisor } from '../agent';
+
+interface ProfileField {
+  field: string;
+  value: string | number | boolean;
+}
 
 const AgentHome: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -33,7 +38,7 @@ const AgentHome: React.FC = () => {
   };
   
   // Handle field changes in the profile form
-  const handleProfileChange = (field: string, value: any) => {
+  const handleProfileChange = (field: string, value: string | number | boolean) => {
     updateProfile(current => ({
       ...current,
       [field]: value
@@ -95,7 +100,7 @@ const AgentHome: React.FC = () => {
                 type="number"
                 id="age"
                 value={profile.age}
-                onChange={(e) => handleProfileChange('age', parseInt(e.target.value))}
+                onChange={(e) => { handleProfileChange('age', parseInt(e.target.value)); }}
                 min="18"
                 max="100"
               />
@@ -107,7 +112,7 @@ const AgentHome: React.FC = () => {
                 type="number"
                 id="income"
                 value={profile.income}
-                onChange={(e) => handleProfileChange('income', parseInt(e.target.value))}
+                onChange={(e) => { handleProfileChange('income', parseInt(e.target.value)); }}
                 min="0"
                 step="1000"
               />
@@ -119,7 +124,7 @@ const AgentHome: React.FC = () => {
                 type="number"
                 id="retirementAge"
                 value={profile.retirementAge}
-                onChange={(e) => handleProfileChange('retirementAge', parseInt(e.target.value))}
+                onChange={(e) => { handleProfileChange('retirementAge', parseInt(e.target.value)); }}
                 min={profile.age}
                 max="100"
               />
@@ -131,7 +136,7 @@ const AgentHome: React.FC = () => {
                 type="number"
                 id="retirementSavings"
                 value={profile.retirementSavings}
-                onChange={(e) => handleProfileChange('retirementSavings', parseInt(e.target.value))}
+                onChange={(e) => { handleProfileChange('retirementSavings', parseInt(e.target.value)); }}
                 min="0"
                 step="1000"
               />
@@ -143,7 +148,7 @@ const AgentHome: React.FC = () => {
                 type="number"
                 id="annualContribution"
                 value={profile.annualContribution}
-                onChange={(e) => handleProfileChange('annualContribution', parseInt(e.target.value))}
+                onChange={(e) => { handleProfileChange('annualContribution', parseInt(e.target.value)); }}
                 min="0"
                 step="500"
               />
@@ -154,7 +159,7 @@ const AgentHome: React.FC = () => {
               <select
                 id="riskTolerance"
                 value={profile.riskTolerance}
-                onChange={(e) => handleProfileChange('riskTolerance', e.target.value)}
+                onChange={(e) => { handleProfileChange('riskTolerance', e.target.value); }}
               >
                 <option value="conservative">Conservative</option>
                 <option value="moderate">Moderate</option>
@@ -167,7 +172,7 @@ const AgentHome: React.FC = () => {
                 type="checkbox"
                 id="hasRothIRA"
                 checked={profile.hasRothIRA}
-                onChange={(e) => handleProfileChange('hasRothIRA', e.target.checked)}
+                onChange={(e) => { handleProfileChange('hasRothIRA', e.target.checked); }}
               />
               <label htmlFor="hasRothIRA">Has Roth IRA</label>
             </div>
@@ -246,7 +251,7 @@ const AgentHome: React.FC = () => {
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); }}
               placeholder="Ask about investments, retirement, or financial planning..."
               disabled={isLoading}
             />

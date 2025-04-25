@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { loadConfig, saveConfig } from '../../utils/config';
 import { get, unset } from 'lodash';
+import readline from 'readline';
 
 /**
  * Command for deleting specific configuration values
@@ -31,16 +32,16 @@ export const deleteCommand = new Command('delete')
       
       // Get confirmation unless --force flag is used
       if (!options.force) {
-        const readline = require('readline').createInterface({
+        const rl = readline.createInterface({
           input: process.stdin,
           output: process.stdout
         });
         
         const answer = await new Promise<string>(resolve => {
-          readline.question(chalk.yellow(`Are you sure you want to delete "${key}"? (y/N) `), resolve);
+          rl.question(chalk.yellow(`Are you sure you want to delete "${key}"? (y/N) `), resolve);
         });
         
-        readline.close();
+        rl.close();
         
         if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
           console.log(chalk.blue('Deletion cancelled.'));

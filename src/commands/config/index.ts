@@ -62,7 +62,7 @@ async function listConfig() {
     // Environment variables
     console.log(chalk.blue('Environment Variables'));
     console.log(`AI_MARKETPLACE_API_KEY: ${process.env.AI_MARKETPLACE_API_KEY ? '********' : chalk.italic('not set')}`);
-    console.log(`AI_MARKETPLACE_URL: ${process.env.AI_MARKETPLACE_URL || chalk.italic('not set')}`);
+    console.log(`AI_MARKETPLACE_URL: ${process.env.AI_MARKETPLACE_URL ?? chalk.italic('not set')}`);
     console.log();
   } catch (error) {
     console.error(chalk.red('Error listing configuration:'), error);
@@ -71,52 +71,53 @@ async function listConfig() {
 
 /**
  * Reset configuration to defaults
+ * Note: Currently unused, but kept for future use
  */
-async function resetConfig() {
-  try {
-    const { confirm } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirm',
-        message: 'Are you sure you want to reset your configuration to defaults?',
-        default: false,
-      },
-    ]);
-    
-    if (!confirm) {
-      console.log(chalk.yellow('Reset cancelled.'));
-      return;
-    }
-
-    const config: Config = {
-      apiKey: process.env.AI_MARKETPLACE_API_KEY || '',
-      apiUrl: process.env.AI_MARKETPLACE_URL || 'https://api.ai-marketplace.dev',
-      telemetry: true,
-      templates: {
-        defaultType: 'app',
-        customTemplatesPath: path.join(os.homedir(), '.ai-marketplace', 'templates')
-      },
-      storage: {
-        appDataPath: path.join(os.homedir(), '.ai-marketplace', 'apps'),
-        pluginDataPath: path.join(os.homedir(), '.ai-marketplace', 'plugins'),
-        agentDataPath: path.join(os.homedir(), '.ai-marketplace', 'agents')
-      },
-      developer: {
-        defaultAuthorName: '',
-        defaultAuthorEmail: '',
-        githubUsername: ''
-      }
-    };
-    
-    await saveConfig(config);
-    console.log(chalk.green('Configuration has been reset to defaults.'));
-    
-    // Display the new configuration
-    await listConfig();
-  } catch (error) {
-    console.error(chalk.red('Error resetting configuration:'), error);
-  }
-}
+// async function resetConfig() {
+//   try {
+//     const { confirm } = await inquirer.prompt([
+//       {
+//         type: 'confirm',
+//         name: 'confirm',
+//         message: 'Are you sure you want to reset your configuration to defaults?',
+//         default: false,
+//       },
+//     ]);
+//     
+//     if (!confirm) {
+//       console.log(chalk.yellow('Reset cancelled.'));
+//       return;
+//     }
+// 
+//     const config: Config = {
+//       apiKey: process.env.AI_MARKETPLACE_API_KEY ?? '',
+//       apiUrl: process.env.AI_MARKETPLACE_URL ?? 'https://api.ai-marketplace.dev',
+//       telemetry: true,
+//       templates: {
+//         defaultType: 'app',
+//         customTemplatesPath: path.join(os.homedir(), '.ai-marketplace', 'templates')
+//       },
+//       storage: {
+//         appDataPath: path.join(os.homedir(), '.ai-marketplace', 'apps'),
+//         pluginDataPath: path.join(os.homedir(), '.ai-marketplace', 'plugins'),
+//         agentDataPath: path.join(os.homedir(), '.ai-marketplace', 'agents')
+//       },
+//       developer: {
+//         defaultAuthorName: '',
+//         defaultAuthorEmail: '',
+//         githubUsername: ''
+//       }
+//     };
+//     
+//     await saveConfig(config);
+//     console.log(chalk.green('Configuration has been reset to defaults.'));
+//     
+//     // Display the new configuration
+//     await listConfig();
+//   } catch (error) {
+//     console.error(chalk.red('Error resetting configuration:'), error);
+//   }
+// }
 
 /**
  * Interactive configuration wizard

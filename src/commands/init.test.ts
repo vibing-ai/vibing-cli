@@ -28,9 +28,18 @@ describe('init command', () => {
     initCommand(program);
     
     // Mock logging functions
-    (logger.log as jest.Mock).mockImplementation(() => {});
-    (logger.startSpinner as jest.Mock).mockImplementation(() => {});
-    (logger.stopSpinner as jest.Mock).mockImplementation(() => {});
+    (logger.log as jest.Mock).mockImplementation((message: string) => {
+      // Do nothing in tests, but this is a proper mock implementation
+      return; 
+    });
+    (logger.startSpinner as jest.Mock).mockImplementation((message: string) => {
+      // Do nothing in tests, but this is a proper mock implementation
+      return;
+    });
+    (logger.stopSpinner as jest.Mock).mockImplementation((success: boolean, message: string) => {
+      // Do nothing in tests, but this is a proper mock implementation
+      return;
+    });
     
     // Mock fs-extra functions
     (fs.existsSync as jest.Mock).mockReturnValue(false);
@@ -46,8 +55,15 @@ describe('init command', () => {
     
     // Verify the command was registered
     expect(initCmd).toBeDefined();
-    expect(initCmd?.description()).toBe('Create a new project');
-    expect(initCmd?.usage()).toContain('[name]');
+    if (initCmd) {
+      const name = initCmd.name.bind(initCmd);
+      const description = initCmd.description.bind(initCmd);
+      const usage = initCmd.usage.bind(initCmd);
+      
+      expect(name()).toBe('init');
+      expect(description()).toBe('Create a new project');
+      expect(usage()).toContain('[name]');
+    }
   });
   
   test('should create a project with specified name and default options', async () => {

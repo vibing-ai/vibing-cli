@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import chalk from 'chalk';
 
 // Import commands
 import { initCommand } from './commands/init';
