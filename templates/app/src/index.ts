@@ -1,4 +1,4 @@
-import { createApp } from '@ai-marketplace/sdk/app';
+import { createApp } from '@vibing-ai/sdk/app';
 import AppHome from './components/AppHome';
 
 export default createApp({

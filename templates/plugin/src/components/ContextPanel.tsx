@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { createContextPanel } from '@ai-marketplace/sdk/surfaces/panels';
-import { useEvents } from '@ai-marketplace/sdk/common/events';
+import { createContextPanel } from '@vibing-ai/sdk/surfaces/panels';
+import { useEvents } from '@vibing-ai/sdk/common/events';
 
 interface DataPoint {
   timestamp: number;

@@ -1,6 +1,6 @@
-import { memory } from '@ai-marketplace/sdk/common/memory';
-import { events } from '@ai-marketplace/sdk/common/events';
-import { createConversationCard } from '@ai-marketplace/sdk/surfaces/cards';
+import { memory } from '@vibing-ai/sdk/common/memory';
+import { events } from '@vibing-ai/sdk/common/events';
+import { createConversationCard } from '@vibing-ai/sdk/surfaces/cards';
 
 // Types for domain-specific knowledge
 interface KnowledgeItem {

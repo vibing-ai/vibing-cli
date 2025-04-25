@@ -1,4 +1,4 @@
-import { createPlugin } from '@ai-marketplace/sdk/plugin';
+import { createPlugin } from '@vibing-ai/sdk/plugin';
 import ConversationCard from './components/ConversationCard';
 import ContextPanel from './components/ContextPanel';
 

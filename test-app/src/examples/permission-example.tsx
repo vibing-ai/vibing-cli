@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { usePermissions } from '@ai-marketplace/sdk/common/permissions';
+import { usePermissions } from '@vibing-ai/sdk/common/permissions';
 
 /**
  * Example component demonstrating permission request patterns

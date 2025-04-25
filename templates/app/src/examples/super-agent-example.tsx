@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSuperAgent } from '@ai-marketplace/sdk/common/super-agent';
+import { useSuperAgent } from '@vibing-ai/sdk/common/super-agent';
 
 /**
  * Example component demonstrating Super Agent integration

@@ -1,10 +1,10 @@
 {
-  "name": "vibe-cli",
+  "name": "@vibing-ai/cli",
   "version": "0.1.0",
   "description": "CLI tool for developing applications for the AI Marketplace",
   "main": "dist/index.js",
   "bin": {
-    "vibe": "./bin/vibe.js"
+    "vibe": "bin/vibe.js"
   },
   "scripts": {
     "build": "tsc",

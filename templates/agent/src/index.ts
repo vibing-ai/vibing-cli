@@ -1,4 +1,4 @@
-import { createAgent } from '@ai-marketplace/sdk/agent';
+import { createAgent } from '@vibing-ai/sdk/agent';
 import { financialAdvisor } from './agent';
 import AgentHome from './components/AgentHome';
 

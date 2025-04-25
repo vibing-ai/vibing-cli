@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useMemory } from '@ai-marketplace/sdk/common/memory';
-import { useSuperAgent } from '@ai-marketplace/sdk/common/super-agent';
+import { useMemory } from '@vibing-ai/sdk/common/memory';
+import { useSuperAgent } from '@vibing-ai/sdk/common/super-agent';
 import { financialAdvisor } from '../agent';
 
 const AgentHome: React.FC = () => {

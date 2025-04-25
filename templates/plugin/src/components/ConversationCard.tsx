@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createConversationCard } from '@ai-marketplace/sdk/surfaces/cards';
+import { createConversationCard } from '@vibing-ai/sdk/surfaces/cards';
 
 interface DataItem {
   id: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMemory } from '@ai-marketplace/sdk/common/memory';
+import { useMemory } from '@vibing-ai/sdk/common/memory';
 
 /**
  * Example component demonstrating advanced Memory System usage patterns
