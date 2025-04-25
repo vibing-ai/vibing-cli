@@ -1,0 +1,31 @@
+{
+  "id": "com.example.financialadvisor",
+  "name": "Financial Advisor",
+  "version": "0.1.0",
+  "description": "AI financial advisor providing investment and retirement planning guidance",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "type": "agent",
+  "domain": "finance",
+  "capabilities": [
+    "investment-advice",
+    "retirement-planning",
+    "tax-guidance"
+  ],
+  "permissions": [
+    {
+      "type": "memory",
+      "access": ["read", "write"],
+      "scope": "user",
+      "purpose": "Store your financial profile and preferences"
+    }
+  ],
+  "surfaces": {
+    "appTab": {
+      "entryPoint": "./src/components/AgentHome.tsx",
+      "title": "Financial Advisor"
+    }
+  }
+} 

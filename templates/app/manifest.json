@@ -1,0 +1,25 @@
+{
+  "id": "com.example.apptemplate",
+  "name": "App Template",
+  "version": "0.1.0",
+  "description": "A template for creating AI Marketplace apps",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "type": "app",
+  "permissions": [
+    {
+      "type": "memory",
+      "access": ["read", "write"],
+      "scope": "project"
+    }
+  ],
+  "surfaces": {
+    "appTab": {
+      "entryPoint": "./src/components/AppHome.tsx",
+      "title": "App Template",
+      "defaultRoute": "/home"
+    }
+  }
+} 

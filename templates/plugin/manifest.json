@@ -1,0 +1,35 @@
+{
+  "id": "com.example.dataplugin",
+  "name": "Data Analysis Plugin",
+  "version": "0.1.0",
+  "description": "A plugin for analyzing and visualizing data",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "type": "plugin",
+  "permissions": [
+    {
+      "type": "memory",
+      "access": ["read"],
+      "scope": "conversation"
+    }
+  ],
+  "surfaces": {
+    "conversationCard": {
+      "entryPoint": "./src/components/ConversationCard.tsx"
+    },
+    "contextPanel": {
+      "entryPoint": "./src/components/ContextPanel.tsx",
+      "title": "Data Analysis"
+    },
+    "commandInterface": {
+      "commands": [
+        {
+          "name": "analyze",
+          "description": "Analyze numerical data"
+        }
+      ]
+    }
+  }
+} 
