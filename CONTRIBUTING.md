@@ -1,6 +1,10 @@
-# Contributing to Vibing CLI
+# Contributing to Vibing AI CLI
 
-Thank you for your interest in contributing to Vibing CLI! This document provides guidelines and instructions to help you get started.
+Thank you for your interest in contributing to the Vibing AI CLI! This document provides guidelines and instructions to help you get started with contributing to our official command-line tool for the Vibing AI platform.
+
+## About Vibing AI
+
+Vibing AI is a platform that enables developers to build, deploy, and monetize AI-powered applications. Our CLI tool is essential for developers interacting with the Vibing AI ecosystem, providing an efficient workflow for creating and managing projects.
 
 ## Code of Conduct
 
@@ -11,8 +15,8 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 1. **Fork the repository**
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/cli.git
-   cd cli
+   git clone https://github.com/YOUR-USERNAME/vibing-cli.git
+   cd vibing-cli
    ```
 3. **Install dependencies**
    ```bash
@@ -21,7 +25,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 4. **Set up development environment**
    ```bash
    npm run build
-   npm link # Makes the CLI available globally
+   npm link # Makes the Vibing AI CLI available globally as 'vibe'
    ```
 
 ## Development Workflow
@@ -64,6 +68,14 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 ## Development Guidelines
 
+### Project Structure
+
+The Vibing AI CLI is structured as follows:
+- `src/` - Source code for the CLI
+- `templates/` - Project templates used by the `init` command
+- `dist/` - Compiled code (generated during build)
+- `test/` - Test files
+
 ### Code Style
 
 We use ESLint and Prettier to maintain code quality and consistency. Please ensure your code follows our style guidelines by running:
@@ -93,12 +105,13 @@ npm run format
 
 ## Release Process
 
-Release management is handled by the maintainers. We follow Semantic Versioning for releases.
+Release management is handled by the Vibing AI team. We follow Semantic Versioning for releases.
 
 ## Questions?
 
 If you have any questions or need help, please:
 - Open an issue in the repository
-- Reach out to the maintainers
+- Reach out to the Vibing AI team via our [Community Forums](https://community.vibing.ai)
+- Contact us at [developers@vibing.ai](mailto:developers@vibing.ai)
 
-Thank you for contributing to Vibing CLI! 
+Thank you for contributing to the Vibing AI CLI! Your contributions help improve the experience for all developers using our platform. 

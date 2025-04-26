@@ -1,6 +1,10 @@
-# Vibing CLI
+# Vibing AI CLI
 
-A comprehensive CLI tool for developing applications for the AI Marketplace.
+The official command-line interface for developing and managing applications for the Vibing AI Marketplace.
+
+## About Vibing AI
+
+Vibing AI is a platform that enables developers to build, deploy, and monetize AI-powered applications. Our marketplace provides a unified space for creators to share their innovations and for users to discover tools that enhance their AI experience.
 
 ## Installation
 
@@ -26,13 +30,13 @@ vibe test
 # Build for production
 vibe build
 
-# Publish to the marketplace
+# Publish to the Vibing AI marketplace
 vibe publish
 ```
 
 ## Project Types
 
-The CLI supports different project types:
+The Vibing AI CLI supports different project types:
 
 - `app` - Full-featured applications with dedicated UIs
 - `plugin` - Extensions that enhance platform capabilities
@@ -42,7 +46,7 @@ The CLI supports different project types:
 
 ### `vibe init [name]`
 
-Create a new project.
+Create a new Vibing AI project.
 
 Options:
 - `-t, --type <type>` - Project type (app, plugin, agent) (default: "app")
@@ -51,7 +55,7 @@ Options:
 
 ### `vibe dev`
 
-Start the development server.
+Start the development server for local testing.
 
 Options:
 - `-p, --port <port>` - Port to use (default: "3000")
@@ -59,7 +63,7 @@ Options:
 
 ### `vibe validate`
 
-Validate project for marketplace submission.
+Validate project for Vibing AI marketplace submission.
 
 Options:
 - `--fix` - Automatically fix issues when possible
@@ -67,7 +71,7 @@ Options:
 
 ### `vibe test`
 
-Run tests.
+Run tests for your Vibing AI project.
 
 Options:
 - `--unit` - Run unit tests
@@ -81,7 +85,7 @@ Options:
 
 ### `vibe build`
 
-Build for production.
+Build your project for production deployment.
 
 Options:
 - `--clean` - Clean before building
@@ -89,11 +93,22 @@ Options:
 
 ### `vibe publish`
 
-Publish to the marketplace.
+Publish your project to the Vibing AI marketplace.
 
 Options:
 - `--skip-validation` - Skip validation checks
 - `--dry-run` - Simulate publishing without actually submitting
+
+## Resources
+
+- [Vibing AI Website](https://vibing.ai)
+- [Developer Documentation](https://docs.vibing.ai)
+- [API Reference](https://api.vibing.ai)
+- [Community Forums](https://community.vibing.ai)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information.
 
 ## License
 
