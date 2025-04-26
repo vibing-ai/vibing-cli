@@ -37,7 +37,7 @@ export function initCommand(program: Command): void {
   // Create command with proper input validation
   program
     .command('init')
-    .description('Initialize a new project')
+    .description('Create a new project')
     .argument('[name]', 'Project name')
     .option('-t, --type <type>', 'Project type (app, plugin, agent)', 'app')
     .option('-d, --dir <directory>', 'Target directory')
@@ -225,6 +225,12 @@ async function createProject(name: string | undefined, options: InitOptions): Pr
 async function secureCopyTemplate(src: string, dest: string): Promise<void> {
   // Read all files and directories
   const entries = await fs.readdir(src, { withFileTypes: true });
+  
+  // Check if entries is valid before iterating
+  if (!entries || entries.length === 0) {
+    logger.log(`No files found in template directory: ${src}`, 'warning');
+    return;
+  }
   
   for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
