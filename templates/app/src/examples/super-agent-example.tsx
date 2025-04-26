@@ -9,6 +9,14 @@ interface AgentResponse {
   data?: Record<string, unknown>;
 }
 
+interface ConversationContext {
+  messages: Array<{
+    role: string;
+    content: string;
+  }>;
+  metadata?: Record<string, unknown>;
+}
+
 export const SuperAgentExample: React.FC = () => {
   const { askSuperAgent, suggestAction, onIntent, getConversationContext } = useSuperAgent();
   
@@ -16,7 +24,7 @@ export const SuperAgentExample: React.FC = () => {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
-  const [context, setContext] = useState<any>(null);
+  const [context, setContext] = useState<ConversationContext | null>(null);
   
   // Register intent handler on mount
   useEffect(() => {

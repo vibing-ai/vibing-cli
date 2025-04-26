@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePermissions } from '@vibing-ai/sdk/common/permissions';
 
+type PermissionResult = Record<string, boolean>;
+
 /**
  * Example component demonstrating permission request patterns
  */
@@ -129,9 +131,12 @@ export const PermissionExample: React.FC = () => {
         }
       ]);
       
-      setHasMemoryReadPermission(!!results['memory.read.project']);
-      setHasMemoryWritePermission(!!results['memory.write.project']);
-      setHasUserProfilePermission(!!results['user.profile.read']);
+      // Cast the result to the correct type before using it
+      const permissionResults = results as unknown as PermissionResult;
+      
+      setHasMemoryReadPermission(!!permissionResults['memory.read.project']);
+      setHasMemoryWritePermission(!!permissionResults['memory.write.project']);
+      setHasUserProfilePermission(!!permissionResults['user.profile.read']);
     } catch (error) {
       console.error('Error requesting all permissions:', error);
     }
@@ -141,12 +146,20 @@ export const PermissionExample: React.FC = () => {
   const revokeMemoryPermissions = async () => {
     try {
       if (hasMemoryReadPermission) {
-        await revoke('memory.read.project');
+        await revoke({
+          type: 'memory',
+          access: ['read'],
+          scope: 'project'
+        });
         setHasMemoryReadPermission(false);
       }
       
       if (hasMemoryWritePermission) {
-        await revoke('memory.write.project');
+        await revoke({
+          type: 'memory',
+          access: ['write'],
+          scope: 'project'
+        });
         setHasMemoryWritePermission(false);
       }
     } catch (error) {
@@ -158,7 +171,11 @@ export const PermissionExample: React.FC = () => {
   const revokeProfilePermission = async () => {
     try {
       if (hasUserProfilePermission) {
-        await revoke('user.profile.read');
+        await revoke({
+          type: 'user',
+          access: ['profile'],
+          scope: 'read'
+        });
         setHasUserProfilePermission(false);
       }
     } catch (error) {

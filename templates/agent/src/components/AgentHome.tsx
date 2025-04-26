@@ -8,9 +8,15 @@ interface ProfileField {
   value: string | number | boolean;
 }
 
+interface ResponseItem {
+  query: string;
+  response: string;
+  timestamp: number;
+}
+
 const AgentHome: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [responses, setResponses] = useState<any[]>([]);
+  const [responses, setResponses] = useState<ResponseItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   // Access the user's financial profile

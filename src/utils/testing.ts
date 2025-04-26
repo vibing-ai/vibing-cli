@@ -57,7 +57,7 @@ async function runTests(
           success: false,
           tests: [
             {
-              name: 'Test environment',
+              name: 'setup',
               status: 'failed',
               error: 'package.json not found'
             }
@@ -80,95 +80,100 @@ async function runTests(
     
     let testCommand = '';
     
-    if (testType === 'unit' || testType === 'integration') {
-      if (!hasJest) {
-        return {
-          success: false,
-          stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
-          testFiles: [
-            {
-              name: 'setup',
-              success: false,
-              tests: [
-                {
-                  name: 'Jest setup',
-                  status: 'failed',
-                  error: 'Jest not found in dependencies'
-                }
-              ]
-            }
-          ]
-        };
-      }
-      
-      // Build Jest command
-      const jestConfig = testType === 'unit' 
-        ? 'jest.config.js'
-        : 'jest.integration.config.js';
-      
-      testCommand = `jest --config ${jestConfig}`;
-      
-      if (coverage) {
-        testCommand += ' --coverage';
-      }
-      
-      if (watch) {
-        testCommand += ' --watch';
-      }
-    } else if (testType === 'e2e') {
-      if (!hasCypress) {
-        return {
-          success: false,
-          stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
-          testFiles: [
-            {
-              name: 'setup',
-              success: false,
-              tests: [
-                {
-                  name: 'Cypress setup',
-                  status: 'failed',
-                  error: 'Cypress not found in dependencies'
-                }
-              ]
-            }
-          ]
-        };
-      }
-      
-      // Build Cypress command
-      testCommand = watch 
-        ? 'cypress open'
-        : 'cypress run';
-    } else if (testType === 'a11y') {
-      // Build accessibility test command
-      testCommand = 'jest --config jest.a11y.config.js';
-      
-      if (coverage) {
-        testCommand += ' --coverage';
-      }
-      
-      if (watch) {
-        testCommand += ' --watch';
-      }
-    } else {
-      return {
-        success: false,
-        stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
-        testFiles: [
-          {
-            name: 'setup',
+    switch (testType) {
+      case 'unit':
+      case 'integration':
+        if (!hasJest) {
+          return {
             success: false,
-            tests: [
+            stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
+            testFiles: [
               {
-                name: 'Test type',
-                status: 'failed',
-                error: `Unknown test type: ${testType}`
+                name: 'setup',
+                success: false,
+                tests: [
+                  {
+                    name: 'Jest setup',
+                    status: 'failed',
+                    error: 'Jest not found in dependencies'
+                  }
+                ]
               }
             ]
-          }
-        ]
-      };
+          };
+        }
+        
+        // Build Jest command
+        const jestConfig = testType === 'unit' 
+          ? 'jest.config.js'
+          : 'jest.integration.config.js';
+        
+        testCommand = `jest --config ${jestConfig}`;
+        
+        if (coverage) {
+          testCommand += ' --coverage';
+        }
+        
+        if (watch) {
+          testCommand += ' --watch';
+        }
+        break;
+      case 'e2e':
+        if (!hasCypress) {
+          return {
+            success: false,
+            stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
+            testFiles: [
+              {
+                name: 'setup',
+                success: false,
+                tests: [
+                  {
+                    name: 'Cypress setup',
+                    status: 'failed',
+                    error: 'Cypress not found in dependencies'
+                  }
+                ]
+              }
+            ]
+          };
+        }
+        
+        // Build Cypress command
+        testCommand = watch 
+          ? 'cypress open'
+          : 'cypress run';
+        break;
+      case 'a11y':
+        // Build accessibility test command
+        testCommand = 'jest --config jest.a11y.config.js';
+        
+        if (coverage) {
+          testCommand += ' --coverage';
+        }
+        
+        if (watch) {
+          testCommand += ' --watch';
+        }
+        break;
+      default:
+        return {
+          success: false,
+          stats: { total: 0, passed: 0, failed: 1, skipped: 0 },
+          testFiles: [
+            {
+              name: 'setup',
+              success: false,
+              tests: [
+                {
+                  name: 'Test type',
+                  status: 'failed',
+                  error: `Unknown test type: ${testType}`
+                }
+              ]
+            }
+          ]
+        };
     }
     
     // In a real implementation, this would actually run the tests

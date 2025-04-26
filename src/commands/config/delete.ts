@@ -1,62 +1,43 @@
 import { Command } from 'commander';
-import chalk from 'chalk';
-import { loadConfig, saveConfig } from '../../utils/config';
-import { get, unset } from 'lodash';
-import readline from 'readline';
+import fs from 'fs-extra';
+import path from 'path';
+import { getConfigPath, loadConfig, saveConfig } from '../../utils/config';
+import { logger } from '../../utils/logger';
 
 /**
- * Command for deleting specific configuration values
+ * Create the delete command for configuration
+ * Safely creates the command with proper validation
  */
-export const deleteCommand = new Command('delete')
-  .description('Delete a specific configuration value')
-  .alias('del')
-  .alias('rm')
-  .argument('<key>', 'Configuration key to delete (e.g., "apiUrl", "templates.defaultType")')
-  .option('-f, --force', 'Skip confirmation prompt')
-  .action(async (key, options) => {
-    try {
-      // Load the current config
-      const config = await loadConfig();
-      
-      // Check if the key exists
-      const valueToDelete = get(config, key);
-      if (valueToDelete === undefined) {
-        console.log(chalk.yellow(`Configuration key "${key}" does not exist.`));
-        return;
-      }
-      
-      // Show value to be deleted
-      console.log(chalk.yellow('Value to be deleted:'));
-      console.log(typeof valueToDelete === 'object' ? 
-        JSON.stringify(valueToDelete, null, 2) : valueToDelete);
-      
-      // Get confirmation unless --force flag is used
-      if (!options.force) {
-        const rl = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout
-        });
+export function createDeleteCommand(): Command {
+  const deleteCommand = new Command('delete')
+    .description('Delete a configuration key')
+    .argument('<key>', 'Configuration key to delete')
+    .action(async (key) => {
+      try {
+        // Load the current config
+        const config = await loadConfig();
         
-        const answer = await new Promise<string>(resolve => {
-          rl.question(chalk.yellow(`Are you sure you want to delete "${key}"? (y/N) `), resolve);
-        });
-        
-        rl.close();
-        
-        if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
-          console.log(chalk.blue('Deletion cancelled.'));
+        // Check if the key exists
+        if (!(key in config)) {
+          logger.log(`Configuration key "${key}" does not exist`, 'error');
           return;
         }
+        
+        // Delete the key
+        delete (config as any)[key];
+        
+        // Save the updated config
+        await saveConfig(config);
+        
+        logger.log(`Configuration key "${key}" deleted successfully`, 'success');
+      } catch (error) {
+        logger.log((error as Error).message, 'error');
+        process.exitCode = 1;
       }
-      
-      // Delete the configuration value
-      unset(config, key);
-      
-      // Save the updated config
-      await saveConfig(config);
-      
-      console.log(chalk.green(`Successfully deleted configuration key "${key}"`));
-    } catch (error) {
-      console.error(chalk.red(`Error deleting configuration value for "${key}":`, error));
-    }
-  }); 
+    });
+    
+  return deleteCommand;
+}
+
+// Export the created command instance
+export const deleteCommand = createDeleteCommand(); 

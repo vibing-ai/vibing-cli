@@ -168,7 +168,7 @@ function displayValidationResults(results: {
 /**
  * Display validation items (errors or warnings)
  */
-function displayValidationItems(items: Array<{code: string; message: string; path?: string}>): void {
+function displayValidationItems(items: {code: string; message: string; path?: string}[]): void {
   items.forEach((item, index) => {
     const prefix = `  ${index + 1}. `;
     const message = item.path 

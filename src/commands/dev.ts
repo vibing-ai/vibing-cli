@@ -5,64 +5,73 @@ import { logger } from '../utils/logger';
 import { Manifest } from '../types';
 import { startSandbox } from '../utils/sandbox';
 
-export interface DevOptions {
-  port?: string;
-  open?: boolean;
-}
-
+/**
+ * Configure and register the dev command
+ */
 export function devCommand(program: Command): void {
+  // Create command with proper input validation
   program
     .command('dev')
     .description('Start development server')
-    .option('-p, --port <port>', 'Port to use', '3000')
-    .option('-o, --open', 'Open in browser', false)
-    .action(async (options: DevOptions) => {
-      logger.log('Starting development server...', 'info');
-      
+    .option('-p, --port <port>', 'Port to run the dev server on', '3000')
+    .option('--no-open', 'Do not open browser automatically')
+    .action(async (options) => {
       try {
-        // Check if current directory is a vibe project
-        const manifestPath = path.resolve(process.cwd(), 'manifest.json');
-        if (!fs.existsSync(manifestPath)) {
-          logger.log('Not a vibe project directory. Make sure you\'re in a project folder with a manifest.json file.', 'error');
+        // Validate port number
+        const port = parseInt(options.port, 10);
+        if (isNaN(port) || port < 1 || port > 65535) {
+          logger.log('Invalid port number. Must be between 1 and 65535.', 'error');
+          process.exitCode = 1;
           return;
         }
         
-        // Read manifest to determine project type
-        const manifest = await fs.readJson(manifestPath) as Manifest;
-        
-        logger.startSpinner('Initializing sandbox environment...');
-        
-        // Start sandbox server (implementation in sandbox.ts)
-        const port = parseInt(options.port ?? '3000', 10);
-        const openBrowser = options.open ?? true;
-        const server = await startSandbox({
-          projectDir: process.cwd(),
-          manifest,
-          port,
-          openBrowser
-        });
-        
-        logger.stopSpinner(true, 'Sandbox environment initialized');
-        
-        logger.log(`Project: ${manifest.name} (${manifest.type})`, 'info');
-        logger.log(`Server running at: http://localhost:${port}`, 'success');
-        logger.log('Press Ctrl+C to stop', 'info');
-        
-        // Handle server shutdown
-        const shutdown = () => {
-          logger.startSpinner('Shutting down server...');
-          server.close(() => {
-            logger.stopSpinner(true, 'Server stopped');
-            process.exit(0);
-          });
-        };
-        
-        process.on('SIGINT', shutdown);
-        process.on('SIGTERM', shutdown);
-        
+        await startDevServer(port, !options['no-open']);
       } catch (error) {
-        logger.stopSpinner(false, 'Failed to start development server');
         logger.log((error as Error).message, 'error');
+        process.exitCode = 1;
       }
     });
+}
+
+/**
+ * Start the development server
+ */
+async function startDevServer(port: number, openBrowser: boolean): Promise<void> {
+  logger.log(`Starting development server on port ${port}...`, 'info');
+  
+  // Validate we're in a project directory
+  const projectDir = process.cwd();
+  const manifestPath = path.join(projectDir, 'manifest.json');
+  
+  if (!fs.existsSync(manifestPath)) {
+    logger.log('Not a project directory. Make sure you are in a directory with a manifest.json file.', 'error');
+    return;
+  }
+  
+  try {
+    // Read the manifest
+    const manifest = await fs.readJson(manifestPath) as Manifest;
+    
+    // Start the sandbox
+    const server = await startSandbox({
+      projectDir,
+      manifest,
+      port,
+      openBrowser
+    });
+    
+    logger.log(`Development server running at http://localhost:${port}`, 'success');
+    logger.log('Press Ctrl+C to stop', 'info');
+    
+    // Handle shutdown
+    process.on('SIGINT', () => {
+      logger.log('\nShutting down development server...', 'info');
+      server.close(() => {
+        logger.log('Development server stopped', 'success');
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    logger.log(`Failed to start development server: ${(error as Error).message}`, 'error');
+  }
 }

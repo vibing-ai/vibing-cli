@@ -5,8 +5,16 @@ import { useSuperAgent } from '@vibing-ai/sdk/common/super-agent';
  * Example component demonstrating Super Agent integration
  */
 interface AgentResponse {
-  content: string;
+  text: string;
   data?: Record<string, unknown>;
+}
+
+interface ConversationContext {
+  messages: Array<{
+    role: string;
+    content: string;
+  }>;
+  metadata?: Record<string, unknown>;
 }
 
 export const SuperAgentExample: React.FC = () => {
@@ -16,12 +24,12 @@ export const SuperAgentExample: React.FC = () => {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
-  const [context, setContext] = useState<any>(null);
+  const [context, setContext] = useState<ConversationContext | null>(null);
   
   // Register intent handler on mount
   useEffect(() => {
     // Handle "summarize" intent from Super Agent
-    const unsubscribe = onIntent('summarize', async (params) => {
+    const unsubscribe = onIntent('summarize', async (params: any) => {
       const { text } = params;
       
       // In a real implementation, this would do more sophisticated processing
@@ -42,7 +50,8 @@ export const SuperAgentExample: React.FC = () => {
     const fetchContext = async () => {
       try {
         const conversationContext = await getConversationContext();
-        setContext(conversationContext);
+        // Add type assertion to match expected format
+        setContext(conversationContext as unknown as ConversationContext);
       } catch (error) {
         console.error('Error fetching conversation context:', error);
       }
@@ -60,7 +69,10 @@ export const SuperAgentExample: React.FC = () => {
     
     try {
       const result = await askSuperAgent(query);
-      setResponse(result.text || 'No response');
+      // Handle different result structures
+      const responseText = typeof result === 'string' ? result : 
+                          (result as any)?.text || 'No response';
+      setResponse(responseText);
     } catch (error) {
       setResponse(`Error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
@@ -79,7 +91,7 @@ export const SuperAgentExample: React.FC = () => {
       // Use streaming option
       await askSuperAgent(query, {
         stream: true,
-        onStream: (chunk) => {
+        onStream: (chunk: string) => {
           setStreamingText(prev => prev + chunk);
         }
       });

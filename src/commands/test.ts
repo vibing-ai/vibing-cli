@@ -49,7 +49,7 @@ export function testCommand(program: Command): void {
         const hasCypress = packageJson.dependencies?.cypress ?? packageJson.devDependencies?.cypress;
         
         // Determine which tests to run
-        const runAll = options.all || 
+        const runAll = options.all ?? 
           (!options.unit && !options.integration && !options.e2e && !options.a11y);
         
         const results: Record<string, TestResult> = {};
@@ -59,8 +59,8 @@ export function testCommand(program: Command): void {
           logger.startSpinner('Running unit tests...');
           results.unit = await runUnitTests({
             projectDir: process.cwd(),
-            coverage: options.coverage || false,
-            watch: options.watch || false
+            coverage: options.coverage ?? false,
+            watch: options.watch ?? false
           });
           logger.stopSpinner(
             results.unit.success, 
@@ -73,8 +73,8 @@ export function testCommand(program: Command): void {
           logger.startSpinner('Running integration tests...');
           results.integration = await runIntegrationTests({
             projectDir: process.cwd(),
-            coverage: options.coverage || false,
-            watch: options.watch || false
+            coverage: options.coverage ?? false,
+            watch: options.watch ?? false
           });
           logger.stopSpinner(
             results.integration.success, 
@@ -87,7 +87,7 @@ export function testCommand(program: Command): void {
           logger.startSpinner('Running end-to-end tests...');
           results.e2e = await runE2ETests({
             projectDir: process.cwd(),
-            watch: options.watch || false
+            watch: options.watch ?? false
           });
           logger.stopSpinner(
             results.e2e.success, 

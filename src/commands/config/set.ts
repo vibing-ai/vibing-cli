@@ -1,73 +1,58 @@
 import { Command } from 'commander';
-import chalk from 'chalk';
-import { loadConfig, saveConfig } from '../../utils/config';
-import { set } from 'lodash';
-import fs from 'fs-extra';
+import { updateConfigValue } from '../../utils/config';
+import { logger } from '../../utils/logger';
 
 /**
- * Command for setting specific configuration values
+ * Create the set command for configuration
+ * Safely creates the command with proper validation
  */
-export const setCommand = new Command('set')
-  .description('Set a specific configuration value')
-  .argument('<key>', 'Configuration key to set (e.g., "apiUrl", "templates.defaultType")')
-  .argument('<value>', 'Value to set for the specified key')
-  .action(async (key, value) => {
-    try {
-      // Load the current config
-      const config = await loadConfig();
-      
-      // Parse the value and update config
-      const parsedValue = parseInputValue(value);
-      set(config, key, parsedValue);
-      
-      // Handle storage directory creation if needed
-      await handleStoragePaths(key, parsedValue);
-      
-      // Save the updated config
-      await saveConfig(config);
-      
-      console.log(chalk.green(`Successfully set ${key} to:`), typeof parsedValue === 'object' ? 
-        JSON.stringify(parsedValue, null, 2) : parsedValue);
-    } catch (error) {
-      console.error(chalk.red(`Error setting configuration value for "${key}":`, error));
-    }
-  });
+export function createSetCommand(): Command {
+  const setCommand = new Command('set')
+    .description('Set a configuration value')
+    .argument('<key>', 'Configuration key to set')
+    .argument('<value>', 'Value to set')
+    .action(async (key, value) => {
+      try {
+        const parsedValue = parseInputValue(value);
+        await updateConfigValue(key as any, parsedValue);
+        logger.log(`Configuration ${key} updated to: ${JSON.stringify(parsedValue)}`, 'success');
+      } catch (error) {
+        logger.log((error as Error).message, 'error');
+        process.exitCode = 1;
+      }
+    });
+    
+  return setCommand;
+}
+
+// Export the created command instance
+export const setCommand = createSetCommand();
 
 /**
- * Parse the input value into the appropriate type
+ * Parse input value from string to appropriate type
  */
-function parseInputValue(value: string): any {
-  // Try to parse the value as JSON if it looks like an object or array
+function parseInputValue(value: string): string | number | boolean | null | undefined | object {
+  // Handle special values
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value === 'null') return null;
+  if (value === 'undefined') return undefined;
+  
+  // Handle numbers
+  if (/^-?\d+$/.test(value)) return parseInt(value, 10);
+  if (/^-?\d+\.\d+$/.test(value)) return parseFloat(value);
+  
+  // Handle JSON objects/arrays if the value starts with { or [
   if ((value.startsWith('{') && value.endsWith('}')) || 
       (value.startsWith('[') && value.endsWith(']'))) {
     try {
       return JSON.parse(value);
     } catch (e) {
-      // If parsing fails, use the original string value
-      console.log(chalk.yellow('Warning: Could not parse value as JSON. Using as string.'));
+      // If JSON parsing fails, treat as string
+      return value;
     }
-  } else if (value === 'true' || value === 'false') {
-    // Handle boolean values
-    return value === 'true';
-  } else if (!isNaN(Number(value)) && value.trim() !== '') {
-    // Handle numeric values
-    return Number(value);
   }
   
-  // Default case: return as string
+  // Default to string
   return value;
-}
-
-/**
- * Handle storage path creation if needed
- */
-async function handleStoragePaths(key: string, value: any): Promise<void> {
-  if (key.startsWith('storage.') && typeof value === 'string') {
-    try {
-      await fs.ensureDir(value);
-      console.log(chalk.green(`Created directory: ${value}`));
-    } catch (err) {
-      console.warn(chalk.yellow(`Warning: Could not create directory: ${value}`));
-    }
-  }
 } 

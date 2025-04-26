@@ -24,22 +24,21 @@ export async function startSandbox(options: SandboxOptions): Promise<Server> {
   
   // For this example, we'll create a simple HTTP server
   const server = createServer((req, res) => {
-    (async () => {
-      try {
-        // Route requests to appropriate handlers
-        if (req.url === '/') {
-          handleRootRequest(res, manifest);
-        } else if (req.url === '/preview') {
-          handlePreviewRequest(res, manifest);
-        } else if (req.url?.startsWith('/api/')) {
-          handleApiRequest(req, res, manifest);
-        } else {
-          handleStaticFileRequest(req, res, projectDir);
-        }
-      } catch (error) {
-        handleServerError(res);
+    // Use a proper try-catch instead of an async IIFE
+    try {
+      // Route requests to appropriate handlers
+      if (req.url === '/') {
+        handleRootRequest(res, manifest);
+      } else if (req.url === '/preview') {
+        handlePreviewRequest(res, manifest);
+      } else if (req.url?.startsWith('/api/')) {
+        handleApiRequest(req, res, manifest);
+      } else {
+        handleStaticFileRequest(req, res, projectDir);
       }
-    })();
+    } catch (error) {
+      handleServerError(res);
+    }
   });
   
   // Start the server
@@ -116,7 +115,7 @@ function handleRootRequest(res: ServerResponse, manifest: Manifest): void {
             <div>Type:</div>
             <div>${manifest.type}</div>
             <div>Description:</div>
-            <div>${manifest.description || 'No description'}</div>
+            <div>${manifest.description ?? 'No description'}</div>
           </div>
         </div>
         <div class="card">
@@ -146,24 +145,57 @@ function handleRootRequest(res: ServerResponse, manifest: Manifest): void {
 function handlePreviewRequest(res: ServerResponse, manifest: Manifest): void {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   
-  // Create a simple preview based on project type
-  let previewContent = '<h1>Project Preview</h1><p>Preview not available for this project type.</p>';
+  // Create a simple preview based on project type with proper HTML escaping
+  // Start with a safe default that doesn't include any user-provided content
+  let previewContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Project Preview</title>
+      </head>
+      <body>
+        <h1>Project Preview</h1>
+        <p>Preview not available for this project type.</p>
+      </body>
+    </html>
+  `;
   
   // Sanitize any user-provided inputs before including in HTML
   const sanitizedName = manifest.name ? manifest.name.replace(/[<>&"']/g, (c) => {
-    return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#039;' }[c] || c;
+    const replacements = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return replacements[c as keyof typeof replacements] ?? c;
   }) : 'Unnamed Project';
   
   const sanitizedDescription = manifest.description ? manifest.description.replace(/[<>&"']/g, (c) => {
-    return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#039;' }[c] || c;
+    const replacements = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return replacements[c as keyof typeof replacements] ?? c;
   }) : 'No description';
   
-  if (manifest.type === 'app') {
-    previewContent = getAppPreviewContent(sanitizedName, sanitizedDescription);
-  } else if (manifest.type === 'plugin') {
-    previewContent = getPluginPreviewContent(sanitizedName, sanitizedDescription);
-  } else if (manifest.type === 'agent') {
-    previewContent = getAgentPreviewContent(sanitizedName, sanitizedDescription);
+  switch (manifest.type) {
+    case 'app':
+      previewContent = getAppPreviewContent(sanitizedName, sanitizedDescription);
+      break;
+    case 'plugin':
+      previewContent = getPluginPreviewContent(sanitizedName, sanitizedDescription);
+      break;
+    case 'agent':
+      previewContent = getAgentPreviewContent(sanitizedName, sanitizedDescription);
+      break;
+    // Default case already handled with initial previewContent
   }
   
   res.end(previewContent);
@@ -174,15 +206,25 @@ function handlePreviewRequest(res: ServerResponse, manifest: Manifest): void {
  */
 function getAppPreviewContent(name: string, description: string): string {
   return `
-    <div style="padding: 20px;">
-      <h2>${name}</h2>
-      <p>${description}</p>
-      <div id="app-root">Loading app...</div>
-      <script>
-        // In a real implementation, this would load the actual app
-        document.getElementById('app-root').innerHTML = '<div style="padding: 20px; background: #f9f9f9; border-radius: 4px;">App UI would render here</div>';
-      </script>
-    </div>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>App Preview</title>
+      </head>
+      <body>
+        <div style="padding: 20px;">
+          <h2>${name}</h2>
+          <p>${description}</p>
+          <div id="app-root">Loading app...</div>
+          <script>
+            // In a real implementation, this would load the actual app
+            document.getElementById('app-root').innerHTML = '<div style="padding: 20px; background: #f9f9f9; border-radius: 4px;">App UI would render here</div>';
+          </script>
+        </div>
+      </body>
+    </html>
   `;
 }
 
@@ -191,27 +233,37 @@ function getAppPreviewContent(name: string, description: string): string {
  */
 function getPluginPreviewContent(name: string, description: string): string {
   return `
-    <div style="padding: 20px;">
-      <h2>${name} Plugin</h2>
-      <p>${description}</p>
-      <div style="margin-top: 20px;">
-        <h3>Conversation Card Preview</h3>
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white; max-width: 400px;">
-          <div id="conversation-card">Loading conversation card...</div>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Plugin Preview</title>
+      </head>
+      <body>
+        <div style="padding: 20px;">
+          <h2>${name} Plugin</h2>
+          <p>${description}</p>
+          <div style="margin-top: 20px;">
+            <h3>Conversation Card Preview</h3>
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white; max-width: 400px;">
+              <div id="conversation-card">Loading conversation card...</div>
+            </div>
+          </div>
+          <div style="margin-top: 20px;">
+            <h3>Context Panel Preview</h3>
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white; width: 300px; height: 400px;">
+              <div id="context-panel">Loading context panel...</div>
+            </div>
+          </div>
+          <script>
+            // In a real implementation, this would load the actual plugin components
+            document.getElementById('conversation-card').innerHTML = '<div style="padding: 10px; background: #f5f5f5; border-radius: 4px;">Conversation Card would render here</div>';
+            document.getElementById('context-panel').innerHTML = '<div style="padding: 10px; background: #f5f5f5; border-radius: 4px;">Context Panel would render here</div>';
+          </script>
         </div>
-      </div>
-      <div style="margin-top: 20px;">
-        <h3>Context Panel Preview</h3>
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white; width: 300px; height: 400px;">
-          <div id="context-panel">Loading context panel...</div>
-        </div>
-      </div>
-      <script>
-        // In a real implementation, this would load the actual plugin components
-        document.getElementById('conversation-card').innerHTML = '<div style="padding: 10px; background: #f5f5f5; border-radius: 4px;">Conversation Card would render here</div>';
-        document.getElementById('context-panel').innerHTML = '<div style="padding: 10px; background: #f5f5f5; border-radius: 4px;">Context Panel would render here</div>';
-      </script>
-    </div>
+      </body>
+    </html>
   `;
 }
 
@@ -220,22 +272,32 @@ function getPluginPreviewContent(name: string, description: string): string {
  */
 function getAgentPreviewContent(name: string, description: string): string {
   return `
-    <div style="padding: 20px;">
-      <h2>${name} Agent</h2>
-      <p>${description}</p>
-      <div style="margin-top: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white;">
-        <div style="display: flex; align-items: flex-start;">
-          <div style="width: 40px; height: 40px; background: #e0e0e0; border-radius: 50%; margin-right: 15px;"></div>
-          <div>
-            <div style="font-weight: bold; margin-bottom: 5px;">${name}</div>
-            <div id="agent-response">Agent would respond here based on user query...</div>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Agent Preview</title>
+      </head>
+      <body>
+        <div style="padding: 20px;">
+          <h2>${name} Agent</h2>
+          <p>${description}</p>
+          <div style="margin-top: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white;">
+            <div style="display: flex; align-items: flex-start;">
+              <div style="width: 40px; height: 40px; background: #e0e0e0; border-radius: 50%; margin-right: 15px;"></div>
+              <div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${name}</div>
+                <div id="agent-response">Agent would respond here based on user query...</div>
+              </div>
+            </div>
+            <div style="margin-top: 20px;">
+              <input type="text" placeholder="Type your question..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
           </div>
         </div>
-        <div style="margin-top: 20px;">
-          <input type="text" placeholder="Type your question..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-      </div>
-    </div>
+      </body>
+    </html>
   `;
 }
 
@@ -265,22 +327,46 @@ function handleApiRequest(req: IncomingMessage, res: ServerResponse, manifest: M
  */
 function handleStaticFileRequest(req: IncomingMessage, res: ServerResponse, projectDir: string): void {
   // Serve static files from project
-  const staticPath = path.join(projectDir, 'src', req.url ?? '');
+  if (!req.url) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    return;
+  }
+  
+  // Only allow serving files from the src directory to limit exposure
+  const staticPath = path.join(projectDir, 'src', req.url);
   
   // Validate path to prevent directory traversal
   const normalizedPath = path.normalize(staticPath);
-  if (!normalizedPath.startsWith(path.join(projectDir, 'src'))) {
+  const normalizedSrcDir = path.normalize(path.join(projectDir, 'src'));
+  
+  if (!normalizedPath.startsWith(normalizedSrcDir)) {
     res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('Forbidden');
     return;
   }
   
+  // Only serve allowed file types
+  const ext = path.extname(normalizedPath).toLowerCase();
+  const allowedExtensions = ['.html', '.css', '.js', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico'];
+  
+  if (!allowedExtensions.includes(ext)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('File type not allowed');
+    return;
+  }
+  
   if (fs.existsSync(normalizedPath) && fs.statSync(normalizedPath).isFile()) {
-    const ext = path.extname(normalizedPath);
     const contentType = getContentType(ext);
     
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(fs.readFileSync(normalizedPath));
+    try {
+      const fileContent = fs.readFileSync(normalizedPath);
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(fileContent);
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error reading file');
+    }
     return;
   }
   
@@ -316,6 +402,7 @@ function getContentType(ext: string): string {
   
   // Sanitize the extension and validate against whitelist
   const sanitizedExt = ext.toLowerCase();
+  // Use hasOwnProperty to safely check if the extension is in our whitelist
   if (Object.prototype.hasOwnProperty.call(contentTypes, sanitizedExt)) {
     return contentTypes[sanitizedExt];
   }

@@ -48,8 +48,9 @@ export default createApp({
               // Set some data
               await window.memory.set('test-key', { timestamp: Date.now() });
               alert('Data saved to memory!');
-            } catch (error) {
-              alert(`Error: ${error.message}`);
+            } catch (error: unknown) {
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+              alert(`Error: ${errorMessage}`);
             }
           })();
         });
@@ -72,8 +73,9 @@ export default createApp({
               // Set some data
               await window.memory.set('test-key', { timestamp: Date.now() });
               alert('Data saved to memory!');
-            } catch (error) {
-              alert(`Error: ${error.message}`);
+            } catch (error: unknown) {
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+              alert(`Error: ${errorMessage}`);
             }
           })();
         };

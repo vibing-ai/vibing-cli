@@ -32,7 +32,7 @@ async function runBuildProcess(options: BuildOptions): Promise<void> {
   logger.log('Building project for production...', 'info');
         
   // Check if current directory is a vibe project
-  const projectDir = await validateProjectDirectory();
+  const projectDir = validateProjectDirectory();
   if (!projectDir) return;
   
   // Clean the build directory if requested
@@ -53,7 +53,7 @@ async function runBuildProcess(options: BuildOptions): Promise<void> {
 /**
  * Validates that the current directory is a valid vibe project
  */
-async function validateProjectDirectory(): Promise<string | null> {
+function validateProjectDirectory(): string | null {
   const manifestPath = path.resolve(process.cwd(), 'manifest.json');
   if (!fs.existsSync(manifestPath)) {
     logger.log('Not a vibe project directory. Make sure you\'re in a project folder with a manifest.json file.', 'error');
@@ -106,15 +106,19 @@ async function buildProjectByType(manifest: Manifest): Promise<void> {
   );
   
   // Specific build steps based on project type
-  if (manifest.type === 'app') {
-    await buildAppProject();
-  } else if (manifest.type === 'plugin') {
-    await buildPluginProject();
-  } else if (manifest.type === 'agent') {
-    await buildAgentProject();
-  } else {
-    logger.stopSpinner(false, `Unknown project type: ${manifest.type}`);
-    return;
+  switch (manifest.type) {
+    case 'app':
+      await buildAppProject();
+      break;
+    case 'plugin':
+      await buildPluginProject();
+      break;
+    case 'agent':
+      await buildAgentProject();
+      break;
+    default:
+      logger.stopSpinner(false, `Unknown project type: ${manifest.type}`);
+      return;
   }
   
   logger.stopSpinner(true, 'Build completed');
@@ -186,6 +190,17 @@ async function buildAgentProject(): Promise<void> {
  */
 async function executeCommand(command: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    // Validate command against a whitelist of allowed commands to prevent command injection
+    const allowedCommands = [
+      'npx webpack --mode production',
+      'npm run build'
+    ];
+    
+    if (!allowedCommands.includes(command)) {
+      reject(new Error(`Command not allowed: ${command}`));
+      return;
+    }
+    
     exec(command, (error) => {
       if (error) {
         reject(error);

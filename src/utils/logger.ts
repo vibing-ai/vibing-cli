@@ -3,9 +3,8 @@ import ora, { Ora } from 'ora';
 
 export type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'debug';
 
-interface TableRow {
-  [key: string]: string | number | boolean;
-}
+type Primitive = string | number | boolean;
+type TableRow = Record<string, Primitive>;
 
 class Logger {
   private spinner: Ora | null = null;

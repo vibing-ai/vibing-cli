@@ -1,24 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useMemory } from '@vibing-ai/sdk/common/memory';
 
+// Define the type for session data
+interface SessionView {
+  page: string;
+  time: number;
+}
+
+interface SessionData {
+  startTime: number;
+  views: SessionView[];
+}
+
+interface ProjectData {
+  id: string;
+  name: string;
+  lastEdited: string;
+}
+
+interface UserPreferences {
+  theme: string;
+  fontSize: string;
+  notifications: boolean;
+}
+
 /**
  * Example component demonstrating advanced Memory System usage patterns
  */
 export const MemoryExample: React.FC = () => {
   // Basic memory usage with namespaced keys
-  const { data: userPrefs, update: updatePrefs } = useMemory('user.preferences', {
+  const { data: userPrefs, update: updatePrefs } = useMemory<UserPreferences>('user.preferences', {
     fallback: { theme: 'light', fontSize: 'medium', notifications: true },
     scope: 'global' // User preferences should be globally available
   });
   
   // Project-specific memory
-  const { data: projectData, update: updateProject } = useMemory('project.currentProject', {
+  const { data: projectData, update: updateProject } = useMemory<ProjectData>('project.currentProject', {
     fallback: { id: '', name: '', lastEdited: '' },
     scope: 'project' // Scoped to current project
   });
   
   // Session-based temporary memory
-  const { data: sessionData, update: updateSession } = useMemory('session.temporaryData', {
+  const { data: sessionData, update: updateSession } = useMemory<SessionData>('session.temporaryData', {
     fallback: { startTime: Date.now(), views: [] },
     scope: 'conversation' // Tied to the current conversation session
   });
@@ -61,11 +84,12 @@ export const MemoryExample: React.FC = () => {
   
   // Save project data
   const saveProjectData = () => {
-    updateProject({
+    updateProject(current => ({
+      ...current,
       id: 'proj-' + Date.now(),
       name: `Project at ${new Date().toLocaleTimeString()}`,
       lastEdited: new Date().toISOString()
-    });
+    }));
   };
   
   return (
@@ -133,7 +157,7 @@ export const MemoryExample: React.FC = () => {
           <div>Page Views: {sessionData.views.length}</div>
           
           <div className="views-list">
-            {sessionData.views.map((view, index) => (
+            {sessionData.views.map((view: SessionView, index: number) => (
               <div key={index} className="view-item">
                 {view.page} - {new Date(view.time).toLocaleTimeString()}
               </div>

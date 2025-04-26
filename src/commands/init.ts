@@ -12,130 +12,135 @@ export interface InitOptions {
   name?: string;
 }
 
+/**
+ * Configure and register the init command
+ */
 export function initCommand(program: Command): void {
+  // Create command with proper input validation
   program
-    .command('init [name]')
-    .description('Create a new project')
+    .command('init')
+    .description('Initialize a new project')
+    .argument('[name]', 'Project name')
     .option('-t, --type <type>', 'Project type (app, plugin, agent)', 'app')
-    .option('-y, --yes', 'Skip prompts and use defaults')
-    .option('--template <template>', 'Use a specific template')
-    .action(async (name: string | undefined, options?: InitOptions) => {
-      logger.log('Creating new project...', 'info');
-      
-      // If name not provided, prompt for it
-      if (!name) {
-        const answers = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'name',
-            message: 'Project name:',
-            validate: (input) => input.length > 0 || 'Name is required'
-          }
-        ]);
-        name = answers.name;
-      }
-      
-      // Ensure name is defined at this point
-      if (!name) {
-        logger.log('Project name is required', 'error');
-        return;
-      }
-      
-      // If not using --yes flag, prompt for project type
-      let type = options?.type || 'app';
-      if (!options?.yes) {
-        const answers = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'type',
-            message: 'Select project type:',
-            choices: [
-              { name: 'App (Full application)', value: 'app' },
-              { name: 'Plugin (Platform extension)', value: 'plugin' },
-              { name: 'Agent (Specialized AI entity)', value: 'agent' }
-            ],
-            default: type
-          }
-        ]);
-        type = answers.type as ProjectType;
-      }
-      
-      // Create project
-      logger.startSpinner('Creating project files...');
-      
+    .option('-d, --dir <directory>', 'Target directory')
+    .option('--template <template>', 'Template to use')
+    .option('--skip-install', 'Skip npm package installation', false)
+    .action(async (name, options) => {
       try {
-        // Determine which template to use
-        const templateName = options?.template ?? type;
-        
-        // Get template directory (in production this would be relative to __dirname)
-        // For development, we'll use a path relative to the project root
-        const templateDir = path.resolve(__dirname, '../../templates', templateName);
-        const targetDir = path.resolve(process.cwd(), name);
-        
-        // Check if directory already exists
-        if (fs.existsSync(targetDir)) {
-          logger.stopSpinner(false, 'Directory already exists');
-          
-          const { overwrite } = await inquirer.prompt([
-            {
-              type: 'confirm',
-              name: 'overwrite',
-              message: `Directory ${name} already exists. Overwrite?`,
-              default: false
-            }
-          ]);
-          
-          if (!overwrite) {
-            logger.log('Project creation cancelled', 'warning');
-            return;
-          }
-          
-          // Remove existing directory
-          fs.removeSync(targetDir);
+        // Validate project name
+        if (name && !/^[a-zA-Z0-9-_]+$/.test(name)) {
+          logger.log('Project name can only contain letters, numbers, hyphens, and underscores', 'error');
+          process.exitCode = 1;
+          return;
         }
         
-        // Copy template to target directory
-        await fs.copy(templateDir, targetDir);
-        
-        // Update package.json with project info
-        const packageJsonPath = path.join(targetDir, 'package.json');
-        let packageJson: Record<string, any> = {};
-        if (fs.existsSync(packageJsonPath)) {
-          packageJson = await fs.readJson(packageJsonPath);
-          packageJson.name = name;
-          packageJson.version = '0.1.0';
-          await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
+        // Validate project type
+        const validTypes = ['app', 'plugin', 'agent'];
+        if (options.type && !validTypes.includes(options.type)) {
+          logger.log(`Invalid project type. Must be one of: ${validTypes.join(', ')}`, 'error');
+          process.exitCode = 1;
+          return;
         }
         
-        // Update manifest.json with project name
-        const manifestPath = path.join(targetDir, 'manifest.json');
-        let manifest: Record<string, any> = {};
-        if (fs.existsSync(manifestPath)) {
-          manifest = await fs.readJson(manifestPath);
-          manifest.name = name;
-          manifest.id = `com.example.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-          manifest.description = manifest.description ?? 'A Vibe Marketplace project';
-          await fs.writeJson(manifestPath, manifest, { spaces: 2 });
-          
-          // Update package.json description with manifest description
-          if (fs.existsSync(packageJsonPath)) {
-            packageJson.description = manifest.description;
-            await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
-          }
-        }
-        
-        // Use manifest or package.json for the project name
-        const projectName = options?.name ?? manifest.name ?? packageJson.name;
-        
-        logger.stopSpinner(true, `Project created at ${targetDir}`);
-        
-        logger.log('\nNext steps:', 'info');
-        logger.log(`  cd ${name}`, 'info');
-        logger.log('  npm install', 'info');
-        logger.log('  vibe dev', 'info');
+        await createProject(name, options);
       } catch (error) {
-        logger.stopSpinner(false, 'Failed to create project');
         logger.log((error as Error).message, 'error');
+        process.exitCode = 1;
       }
     });
+}
+
+/**
+ * Create a new project with the given name and options
+ */
+async function createProject(name: string | undefined, options: any): Promise<void> {
+  logger.log('Creating new project...', 'info');
+  
+  // If name not provided, use a default
+  if (!name) {
+    name = 'my-project';
+    logger.log(`No project name provided. Using default: ${name}`, 'info');
+  }
+  
+  // Determine project type
+  const type = options.type ?? 'app';
+  
+  logger.startSpinner('Creating project files...');
+  
+  try {
+    // Determine which template to use
+    const templateName = options.template ?? type;
+    
+    // Get template directory
+    const templateDir = path.resolve(__dirname, '../../templates', templateName);
+    
+    // Determine target directory
+    const targetDir = options.dir 
+      ? path.resolve(process.cwd(), options.dir) 
+      : path.resolve(process.cwd(), name);
+    
+    // Check if directory already exists
+    if (fs.existsSync(targetDir)) {
+      logger.stopSpinner(false, 'Directory already exists');
+      logger.log('Project creation cancelled. Choose a different name or directory.', 'warning');
+      return;
+    }
+    
+    // Verify template exists
+    if (!fs.existsSync(templateDir)) {
+      logger.stopSpinner(false, 'Template not found');
+      logger.log(`Template ${templateName} does not exist.`, 'error');
+      return;
+    }
+    
+    // Copy template to target directory
+    await fs.copy(templateDir, targetDir);
+    
+    // Update package.json with project info
+    const packageJsonPath = path.join(targetDir, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson: Record<string, string | number | object> = await fs.readJson(packageJsonPath);
+      packageJson.name = name;
+      packageJson.version = '0.1.0';
+      await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
+    }
+    
+    // Update manifest.json with project name
+    const manifestPath = path.join(targetDir, 'manifest.json');
+    if (fs.existsSync(manifestPath)) {
+      const manifest: Partial<Manifest> = await fs.readJson(manifestPath);
+      manifest.name = name;
+      // Create a safe ID from the name
+      const safeId = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      manifest.id = `com.example.${safeId}`;
+      manifest.description = manifest.description ?? 'A new project';
+      await fs.writeJson(manifestPath, manifest, { spaces: 2 });
+    }
+    
+    logger.stopSpinner(true, `Project created at ${targetDir}`);
+    
+    // Install dependencies unless skipped
+    if (!options.skipInstall) {
+      logger.startSpinner('Installing dependencies...');
+      try {
+        // Use a child process to run npm install
+        const { execSync } = require('child_process');
+        execSync('npm install', { cwd: targetDir, stdio: 'ignore' });
+        logger.stopSpinner(true, 'Dependencies installed');
+      } catch (error) {
+        logger.stopSpinner(false, 'Failed to install dependencies');
+        logger.log('You can install dependencies manually by running "npm install"', 'warning');
+      }
+    }
+    
+    logger.log('\nNext steps:', 'info');
+    logger.log(`  cd ${options.dir || name}`, 'info');
+    if (options.skipInstall) {
+      logger.log('  npm install', 'info');
+    }
+    logger.log('  npm start', 'info');
+  } catch (error) {
+    logger.stopSpinner(false, 'Failed to create project');
+    throw error;
+  }
 }

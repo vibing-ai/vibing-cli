@@ -110,7 +110,7 @@ export const ContextPanel: React.FC = () => {
   // Get the selected series data
   const getSelectedSeriesData = (): DataSeries | null => {
     if (!selectedSeries) return null;
-    return dataSeries.find(series => series.id === selectedSeries) || null;
+    return dataSeries.find(series => series.id === selectedSeries) ?? null;
   };
   
   // Calculate statistics for the selected series

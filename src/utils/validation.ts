@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
-import { Manifest, ValidationResult, ValidationWarning } from '../types';
+import { Manifest, ValidationResult, ValidationWarning, Permission } from '../types';
 
 // Default validation result
 const defaultResult: ValidationResult = {
@@ -12,10 +12,10 @@ const defaultResult: ValidationResult = {
 /**
  * Validates the manifest file
  */
-export async function validateManifest(
+export function validateManifest(
   manifest: Manifest, 
   fix = false
-): Promise<ValidationResult> {
+): ValidationResult {
   const result: ValidationResult = { ...defaultResult };
   
   // Check required fields
@@ -38,7 +38,8 @@ function validateRequiredFields(manifest: Manifest, result: ValidationResult): v
       code: 'manifest-missing-id',
       message: 'Manifest is missing required field: id'
     });
-  } else if (!/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$/i.test(manifest.id)) {
+  } else if (!/^[a-z][a-z0-9_]{0,63}(\.[a-z0-9_]{1,63}){1,10}$/i.test(manifest.id)) {
+    // Safer regex with bounds on repetition to prevent ReDoS
     result.errors.push({
       code: 'manifest-invalid-id',
       message: 'Manifest id must be in reverse domain format (e.g., com.example.myapp)'
@@ -67,7 +68,7 @@ function validateRequiredFields(manifest: Manifest, result: ValidationResult): v
   }
   
   // Validate type field
-  if (!manifest.type) {
+  if (manifest.type === undefined) {
     result.errors.push({
       code: 'manifest-missing-type',
       message: 'Manifest is missing required field: type'
@@ -104,10 +105,10 @@ function validateRecommendedFields(manifest: Manifest, result: ValidationResult)
 /**
  * Validates the permissions in the manifest
  */
-export async function validatePermissions(
+export function validatePermissions(
   manifest: Manifest, 
   fix = false
-): Promise<ValidationResult> {
+): ValidationResult {
   const result: ValidationResult = { ...defaultResult };
   
   // Check if permissions are defined when needed
@@ -132,7 +133,7 @@ export async function validatePermissions(
 /**
  * Validate a single permission entry
  */
-function validateSinglePermission(permission: any, index: number, result: ValidationResult): void {
+function validateSinglePermission(permission: Permission, index: number, result: ValidationResult): void {
   // Check for required type field
   if (!permission.type) {
     result.errors.push({
@@ -211,15 +212,32 @@ async function findFiles(dir: string, extensions: string[]): Promise<string[]> {
   // Validate and normalize the directory path
   const normalizedDir = path.normalize(dir);
   
+  // Ensure the directory path is absolute and exists
+  if (!path.isAbsolute(normalizedDir)) {
+    console.error(`Directory path must be absolute: ${normalizedDir}`);
+    return files;
+  }
+  
+  if (!await fs.pathExists(normalizedDir)) {
+    console.error(`Directory does not exist: ${normalizedDir}`);
+    return files;
+  }
+  
   try {
     const items = await fs.readdir(normalizedDir);
     
     for (const item of items) {
+      // Skip items that start with . to avoid hidden files/directories
+      if (item.startsWith('.')) {
+        continue;
+      }
+      
       // Construct and validate full path
       const fullPath = path.join(normalizedDir, item);
       
       // Ensure the path is still within the original directory (prevent path traversal)
       if (!fullPath.startsWith(normalizedDir)) {
+        console.error(`Path traversal detected: ${fullPath}`);
         continue;
       }
       
@@ -244,6 +262,47 @@ async function findFiles(dir: string, extensions: string[]): Promise<string[]> {
   return files;
 }
 
+// Helper to safely read a file within specified base path
+async function safeReadFile(filePath: string, baseDir: string, encoding: BufferEncoding = 'utf8'): Promise<string | null> {
+  // Normalize paths
+  const normalizedFilePath = path.normalize(filePath);
+  const normalizedBaseDir = path.normalize(baseDir);
+  
+  // Check for path traversal attempts
+  if (!normalizedFilePath.startsWith(normalizedBaseDir)) {
+    console.error(`Path traversal attempt detected: ${filePath}`);
+    return null;
+  }
+  
+  // Check if file exists
+  if (!await fs.pathExists(normalizedFilePath)) {
+    console.error(`File does not exist: ${filePath}`);
+    return null;
+  }
+  
+  try {
+    return await fs.readFile(normalizedFilePath, encoding);
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error);
+    return null;
+  }
+}
+
+// Helper to safely check if file exists within specified base path
+async function safePathExists(targetPath: string, baseDir: string): Promise<boolean> {
+  // Normalize paths
+  const normalizedPath = path.normalize(targetPath);
+  const normalizedBaseDir = path.normalize(baseDir);
+  
+  // Check for path traversal attempts
+  if (!normalizedPath.startsWith(normalizedBaseDir)) {
+    console.error(`Path traversal attempt detected: ${targetPath}`);
+    return false;
+  }
+  
+  return await fs.pathExists(normalizedPath);
+}
+
 /**
  * Validates accessibility of the project
  */
@@ -260,7 +319,7 @@ export async function validateAccessibility(
   
   try {
     // Check if src directory exists
-    const srcExists = await fs.pathExists(srcDir);
+    const srcExists = await safePathExists(srcDir, normalizedProjectDir);
     if (srcExists) {
       // Recursively find all .tsx and .jsx files
       const files = await findFiles(srcDir, ['.tsx', '.jsx']);
@@ -273,7 +332,8 @@ export async function validateAccessibility(
             continue;
           }
           
-          const content = await fs.readFile(file, 'utf8');
+          const content = await safeReadFile(file, normalizedProjectDir);
+          if (!content) continue;
           
           // Safely check for image tags without alt attributes using regex instead of includes
           const imgTagWithoutAlt = /<img\s+(?![^>]*\balt=)[^>]*\/?>/i;
@@ -298,4 +358,4 @@ export async function validateAccessibility(
   
   result.valid = result.errors.length === 0;
   return result;
-} 
+}

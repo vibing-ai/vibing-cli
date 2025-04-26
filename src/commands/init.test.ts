@@ -46,7 +46,7 @@ describe('init command', () => {
     (fs.copy as jest.Mock).mockResolvedValue(undefined);
     (fs.readJson as jest.Mock).mockResolvedValue({});
     (fs.writeJson as jest.Mock).mockResolvedValue(undefined);
-    (fs.removeSync as jest.Mock).mockImplementation(() => {});
+    (fs.removeSync as jest.Mock).mockImplementation(function() { return; });
   });
   
   test('should register the init command', () => {
@@ -68,7 +68,7 @@ describe('init command', () => {
   
   test('should create a project with specified name and default options', async () => {
     // Mock process.cwd()
-    const originalCwd = process.cwd;
+    const originalCwd = process.cwd.bind(process);
     process.cwd = jest.fn().mockReturnValue('/test');
     
     // Mock inquirer to return a type (needed because we're not using --yes option)
@@ -92,7 +92,7 @@ describe('init command', () => {
   
   test('should prompt for name if not provided', async () => {
     // Mock process.cwd()
-    const originalCwd = process.cwd;
+    const originalCwd = process.cwd.bind(process);
     process.cwd = jest.fn().mockReturnValue('/test');
     
     // Mock inquirer to return a name and a type
@@ -119,7 +119,7 @@ describe('init command', () => {
   
   test('should handle directory already exists', async () => {
     // Mock process.cwd()
-    const originalCwd = process.cwd;
+    const originalCwd = process.cwd.bind(process);
     process.cwd = jest.fn().mockReturnValue('/test');
     
     // Mock fs.existsSync to return true
@@ -143,7 +143,7 @@ describe('init command', () => {
   
   test('should cancel if user declines overwrite', async () => {
     // Mock process.cwd()
-    const originalCwd = process.cwd;
+    const originalCwd = process.cwd.bind(process);
     process.cwd = jest.fn().mockReturnValue('/test');
     
     // Mock fs.existsSync to return true

@@ -102,7 +102,7 @@ export async function saveConfig(config: Config): Promise<void> {
  */
 export async function getConfigValue<K extends keyof Config>(key: K): Promise<Config[K]> {
   const config = await loadConfig();
-  if (key in config) {
+  if (Object.prototype.hasOwnProperty.call(config, key)) {
     return config[key];
   }
   throw new Error(`Invalid configuration key: ${key}`);
@@ -113,7 +113,7 @@ export async function getConfigValue<K extends keyof Config>(key: K): Promise<Co
  */
 export async function updateConfigValue<K extends keyof Config>(key: K, value: Config[K]): Promise<void> {
   const config = await loadConfig();
-  if (key in config) {
+  if (Object.prototype.hasOwnProperty.call(config, key)) {
     config[key] = value;
     await saveConfig(config);
   } else {

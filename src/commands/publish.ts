@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import { logger } from '../utils/logger';
-import { Manifest, ValidationResult } from '../types';
+import { Manifest, ValidationResult, ValidationError, ValidationWarning } from '../types';
 import { validateManifest, validatePermissions, validateSecurity, validateAccessibility } from '../utils/validation';
 
 export interface PublishOptions {
@@ -127,7 +127,7 @@ async function validateProject(manifest: Manifest): Promise<boolean> {
 /**
  * Report validation errors to the console
  */
-function reportValidationErrors(errors: any[]): void {
+function reportValidationErrors(errors: ValidationError[]): void {
   logger.log(`Found ${errors.length} error(s):`, 'error');
   errors.forEach((error, index) => {
     logger.log(`  ${index + 1}. ${error.message}${error.path ? ` (${error.path})` : ''}`, 'error');
@@ -139,7 +139,7 @@ function reportValidationErrors(errors: any[]): void {
 /**
  * Handle validation warnings and prompt for continuation
  */
-async function handleValidationWarnings(warnings: any[]): Promise<boolean> {
+async function handleValidationWarnings(warnings: ValidationWarning[]): Promise<boolean> {
   logger.log(`Found ${warnings.length} warning(s):`, 'warning');
   warnings.forEach((warning, index) => {
     logger.log(`  ${index + 1}. ${warning.message}${warning.path ? ` (${warning.path})` : ''}`, 'warning');
@@ -186,7 +186,7 @@ async function confirmPublication(manifest: Manifest): Promise<boolean> {
 /**
  * Publish to marketplace (or simulate publication)
  */
-async function publishToMarketplace(manifest: Manifest, isDryRun: boolean = false): Promise<void> {
+async function publishToMarketplace(manifest: Manifest, isDryRun = false): Promise<void> {
   logger.startSpinner(isDryRun ? 'Simulating publication...' : 'Publishing to marketplace...');
   
   // In a real implementation, this would:
