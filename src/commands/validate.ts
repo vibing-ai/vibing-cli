@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import { logger } from '../utils/logger';
 import { Manifest, ValidationResult } from '../types';
 import { validateManifest, validatePermissions, validateSecurity, validateAccessibility } from '../utils/validation';
+import { withErrorHandling } from '../utils/errorHandling';
 
 export interface ValidateOptions {
   fix?: boolean;
@@ -15,35 +16,55 @@ export function validateCommand(program: Command): void {
     .command('validate')
     .description('Validate the project')
     .option('--fix', 'Attempt to fix issues automatically', false)
-    .action(async (options: ValidateOptions) => {
-      try {
-        await runValidation(options);
-      } catch (error) {
-        logger.log((error as Error).message, 'error');
-        process.exitCode = 1;
-      }
-    });
+    .option('--json', 'Output results as JSON', false)
+    .action(withErrorHandling(async (options: ValidateOptions) => {
+      await runValidation(options);
+    }));
 }
 
 /**
  * Run the validation process
  */
 async function runValidation(options: ValidateOptions): Promise<void> {
-  logger.log('Validating project...', 'info');
+  if (!options.json) {
+    logger.log('Validating project...', 'info');
+  }
   
   // Check if current directory is a valid project
   const projectDir = validateProjectDirectory();
-  if (!projectDir) return;
+  if (!projectDir) {
+    if (options.json) {
+      outputJsonResult({
+        valid: false,
+        errors: [{ code: 'error-not-project', message: 'Not a vibe project directory' }],
+        warnings: []
+      });
+    }
+    return;
+  }
   
   // Read manifest file
   const manifest = await readManifest();
-  if (!manifest) return;
+  if (!manifest) {
+    if (options.json) {
+      outputJsonResult({
+        valid: false,
+        errors: [{ code: 'error-invalid-manifest', message: 'Failed to read manifest.json' }],
+        warnings: []
+      });
+    }
+    return;
+  }
   
   // Run validations
-  const results = await runAllValidations(manifest, projectDir, options.fix ?? false);
+  const results = await runAllValidations(manifest, projectDir, options.fix ?? false, options.json ?? false);
   
   // Display results
-  displayValidationResults(results);
+  if (options.json) {
+    outputJsonResult(consolidateResults(results));
+  } else {
+    displayValidationResults(results);
+  }
 }
 
 /**
@@ -77,14 +98,17 @@ async function readManifest(): Promise<Manifest | null> {
 async function runAllValidations(
   manifest: Manifest, 
   projectDir: string, 
-  fix: boolean
+  fix: boolean,
+  json: boolean
 ): Promise<{
   manifestResult: ValidationResult;
   permissionsResult: ValidationResult;
   securityResult: ValidationResult;
   accessibilityResult: ValidationResult;
 }> {
-  logger.startSpinner('Running validation checks...');
+  if (!json) {
+    logger.startSpinner('Running validation checks...');
+  }
   
   // Run various validation checks
   const manifestResult = await validateManifest(manifest, fix);
@@ -92,7 +116,9 @@ async function runAllValidations(
   const securityResult = await validateSecurity(projectDir);
   const accessibilityResult = await validateAccessibility(projectDir);
   
-  logger.stopSpinner(true, 'Validation checks completed');
+  if (!json) {
+    logger.stopSpinner(true, 'Validation checks completed');
+  }
   
   return {
     manifestResult,
@@ -100,6 +126,46 @@ async function runAllValidations(
     securityResult,
     accessibilityResult
   };
+}
+
+/**
+ * Consolidate results into a single validation result
+ */
+function consolidateResults(results: {
+  manifestResult: ValidationResult;
+  permissionsResult: ValidationResult;
+  securityResult: ValidationResult;
+  accessibilityResult: ValidationResult;
+}): ValidationResult {
+  const { manifestResult, permissionsResult, securityResult, accessibilityResult } = results;
+  
+  return {
+    valid: 
+      manifestResult.valid && 
+      permissionsResult.valid && 
+      securityResult.valid && 
+      accessibilityResult.valid,
+    errors: [
+      ...manifestResult.errors.map(error => ({...error, category: 'manifest'})),
+      ...permissionsResult.errors.map(error => ({...error, category: 'permissions'})),
+      ...securityResult.errors.map(error => ({...error, category: 'security'})),
+      ...accessibilityResult.errors.map(error => ({...error, category: 'accessibility'}))
+    ],
+    warnings: [
+      ...manifestResult.warnings.map(warning => ({...warning, category: 'manifest'})),
+      ...permissionsResult.warnings.map(warning => ({...warning, category: 'permissions'})),
+      ...securityResult.warnings.map(warning => ({...warning, category: 'security'})),
+      ...accessibilityResult.warnings.map(warning => ({...warning, category: 'accessibility'}))
+    ]
+  };
+}
+
+/**
+ * Output results as JSON
+ */
+function outputJsonResult(result: ValidationResult): void {
+  const jsonOutput = JSON.stringify(result, null, 2);
+  console.log(jsonOutput);
 }
 
 /**

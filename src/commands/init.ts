@@ -4,13 +4,31 @@ import path from 'path';
 import fs from 'fs-extra';
 import { logger } from '../utils/logger';
 import { ProjectType, Manifest } from '../types';
+import { withErrorHandling } from '../utils/errorHandling';
 
 export interface InitOptions {
   type?: ProjectType;
   yes?: boolean;
   template?: string;
   name?: string;
+  dir?: string;
+  skipInstall?: boolean;
 }
+
+// Files that should never be copied to the target project
+const IGNORED_FILES = [
+  '.git',
+  '.DS_Store',
+  'node_modules',
+  '.env',
+  '.env.local',
+  '.env.development',
+  '.env.test',
+  '.env.production',
+  '.env.example',
+  'secrets.json',
+  'credentials.json'
+];
 
 /**
  * Configure and register the init command
@@ -23,47 +41,76 @@ export function initCommand(program: Command): void {
     .argument('[name]', 'Project name')
     .option('-t, --type <type>', 'Project type (app, plugin, agent)', 'app')
     .option('-d, --dir <directory>', 'Target directory')
+    .option('-y, --yes', 'Skip prompts and use defaults', false)
     .option('--template <template>', 'Template to use')
     .option('--skip-install', 'Skip npm package installation', false)
-    .action(async (name, options) => {
-      try {
-        // Validate project name
-        if (name && !/^[a-zA-Z0-9-_]+$/.test(name)) {
-          logger.log('Project name can only contain letters, numbers, hyphens, and underscores', 'error');
-          process.exitCode = 1;
-          return;
-        }
-        
-        // Validate project type
-        const validTypes = ['app', 'plugin', 'agent'];
-        if (options.type && !validTypes.includes(options.type)) {
-          logger.log(`Invalid project type. Must be one of: ${validTypes.join(', ')}`, 'error');
-          process.exitCode = 1;
-          return;
-        }
-        
-        await createProject(name, options);
-      } catch (error) {
-        logger.log((error as Error).message, 'error');
+    .action(withErrorHandling(async (name, options) => {
+      // Validate project name
+      if (name && !/^[a-zA-Z0-9-_]+$/.test(name)) {
+        logger.log('Project name can only contain letters, numbers, hyphens, and underscores', 'error');
         process.exitCode = 1;
+        return;
       }
-    });
+      
+      // Validate project type
+      const validTypes = ['app', 'plugin', 'agent'];
+      if (options.type && !validTypes.includes(options.type)) {
+        logger.log(`Invalid project type. Must be one of: ${validTypes.join(', ')}`, 'error');
+        process.exitCode = 1;
+        return;
+      }
+      
+      await createProject(name, options);
+    }));
 }
 
 /**
  * Create a new project with the given name and options
  */
-async function createProject(name: string | undefined, options: any): Promise<void> {
+async function createProject(name: string | undefined, options: InitOptions): Promise<void> {
   logger.log('Creating new project...', 'info');
   
-  // If name not provided, use a default
-  if (!name) {
+  // If --yes flag is provided but no name, we still need to prompt for name
+  if (!name && !options.yes) {
+    const answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Project name:',
+        default: 'my-project',
+        validate: (input) => {
+          if (!/^[a-zA-Z0-9-_]+$/.test(input)) {
+            return 'Project name can only contain letters, numbers, hyphens, and underscores';
+          }
+          return true;
+        }
+      }
+    ]);
+    name = answers.name;
+  } else if (!name) {
+    // If --yes is provided but no name, use default
     name = 'my-project';
     logger.log(`No project name provided. Using default: ${name}`, 'info');
   }
   
-  // Determine project type
-  const type = options.type ?? 'app';
+  // If --yes flag is not provided, prompt for project type
+  let type = options.type ?? 'app';
+  if (!options.yes && !options.type) {
+    const answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'type',
+        message: 'Project type:',
+        choices: [
+          { name: 'Application', value: 'app' },
+          { name: 'Plugin', value: 'plugin' },
+          { name: 'Agent', value: 'agent' }
+        ],
+        default: 'app'
+      }
+    ]);
+    type = answers.type;
+  }
   
   logger.startSpinner('Creating project files...');
   
@@ -77,13 +124,35 @@ async function createProject(name: string | undefined, options: any): Promise<vo
     // Determine target directory
     const targetDir = options.dir 
       ? path.resolve(process.cwd(), options.dir) 
-      : path.resolve(process.cwd(), name);
+      : name ? path.resolve(process.cwd(), name) : path.resolve(process.cwd(), 'my-project');
     
     // Check if directory already exists
     if (fs.existsSync(targetDir)) {
       logger.stopSpinner(false, 'Directory already exists');
-      logger.log('Project creation cancelled. Choose a different name or directory.', 'warning');
-      return;
+      
+      // If --yes is provided, exit
+      if (options.yes) {
+        logger.log('Project creation cancelled. Choose a different name or directory.', 'warning');
+        return;
+      }
+      
+      // Prompt for overwrite
+      const answers = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'overwrite',
+          message: 'Directory already exists. Overwrite?',
+          default: false
+        }
+      ]);
+      
+      if (!answers.overwrite) {
+        logger.log('Project creation cancelled.', 'info');
+        return;
+      }
+      
+      // Remove existing directory for overwrite
+      fs.removeSync(targetDir);
     }
     
     // Verify template exists
@@ -93,14 +162,17 @@ async function createProject(name: string | undefined, options: any): Promise<vo
       return;
     }
     
-    // Copy template to target directory
-    await fs.copy(templateDir, targetDir);
+    // Create target directory
+    fs.ensureDirSync(targetDir);
+    
+    // Copy template to target directory securely
+    await secureCopyTemplate(templateDir, targetDir);
     
     // Update package.json with project info
     const packageJsonPath = path.join(targetDir, 'package.json');
     if (fs.existsSync(packageJsonPath)) {
       const packageJson: Record<string, string | number | object> = await fs.readJson(packageJsonPath);
-      packageJson.name = name;
+      packageJson.name = name || 'my-project';
       packageJson.version = '0.1.0';
       await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
     }
@@ -109,9 +181,10 @@ async function createProject(name: string | undefined, options: any): Promise<vo
     const manifestPath = path.join(targetDir, 'manifest.json');
     if (fs.existsSync(manifestPath)) {
       const manifest: Partial<Manifest> = await fs.readJson(manifestPath);
-      manifest.name = name;
+      manifest.name = name || 'my-project';
       // Create a safe ID from the name
-      const safeId = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const projectName = name || 'my-project';
+      const safeId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '');
       manifest.id = `com.example.${safeId}`;
       manifest.description = manifest.description ?? 'A new project';
       await fs.writeJson(manifestPath, manifest, { spaces: 2 });
@@ -142,5 +215,33 @@ async function createProject(name: string | undefined, options: any): Promise<vo
   } catch (error) {
     logger.stopSpinner(false, 'Failed to create project');
     throw error;
+  }
+}
+
+/**
+ * Securely copy template files to target directory
+ * Filters out sensitive files and respects .gitignore
+ */
+async function secureCopyTemplate(src: string, dest: string): Promise<void> {
+  // Read all files and directories
+  const entries = await fs.readdir(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    // Skip ignored files
+    if (IGNORED_FILES.includes(entry.name)) {
+      continue;
+    }
+    
+    if (entry.isDirectory()) {
+      // Recursively copy directories
+      await fs.ensureDir(destPath);
+      await secureCopyTemplate(srcPath, destPath);
+    } else {
+      // Copy files
+      await fs.copyFile(srcPath, destPath);
+    }
   }
 }

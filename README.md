@@ -8,8 +8,39 @@ Vibing AI is a platform that enables developers to build, deploy, and monetize A
 
 ## Installation
 
+### NPM Installation
 ```bash
 npm install -g vibing-cli
+```
+
+### Binary Installation
+
+You can also download pre-built binaries for your platform from the [releases page](https://github.com/vibing-ai/cli/releases).
+
+#### macOS
+```bash
+# Using Homebrew
+brew install vibing-ai/tap/vibe
+
+# Manual installation
+curl -fsSL https://github.com/vibing-ai/cli/releases/latest/download/vibe-macos -o /usr/local/bin/vibe
+chmod +x /usr/local/bin/vibe
+```
+
+#### Linux
+```bash
+# Using apt (Debian/Ubuntu)
+curl -fsSL https://github.com/vibing-ai/cli/releases/latest/download/vibe-linux -o /usr/local/bin/vibe
+chmod +x /usr/local/bin/vibe
+```
+
+#### Windows
+```powershell
+# Using Scoop
+scoop bucket add vibing-ai https://github.com/vibing-ai/scoop-bucket.git
+scoop install vibe
+
+# Manual installation - download from releases page and add to your PATH
 ```
 
 ## Usage
@@ -52,6 +83,8 @@ Options:
 - `-t, --type <type>` - Project type (app, plugin, agent) (default: "app")
 - `-y, --yes` - Skip prompts and use defaults
 - `--template <template>` - Use a specific template
+- `-d, --dir <directory>` - Target directory
+- `--skip-install` - Skip npm package installation
 
 ### `vibe dev`
 
@@ -99,6 +132,25 @@ Options:
 - `--skip-validation` - Skip validation checks
 - `--dry-run` - Simulate publishing without actually submitting
 
+## For Developers
+
+If you're contributing to the CLI itself, here are some useful development commands:
+
+```bash
+# Install dependencies
+npm install
+
+# Build the TypeScript source
+npm run build
+
+# Run tests
+npm test
+
+# Bundle into standalone binaries
+npm run bundle        # For current platform
+npm run bundle:all    # For all platforms
+```
+
 ## Resources
 
 - [Vibing AI Website](https://vibing.ai)
@@ -112,4 +164,4 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## License
 
-MIT 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
